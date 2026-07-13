@@ -1,8 +1,8 @@
 # EternalX.Blazor - Detailed Requirements Specification
 
-**Version:** 1.0  
-**Date:** 2026-07-12  
-**Status:** Active - UI + backend aligned to imported MCP requirements (2026-07-13)
+**Version:** 1.1
+**Date:** 2026-07-13
+**Status:** Active - X-style engagement, admin agents/personality metrics, live AI (Grok default)
 
 **Precedence:** Requirements from sibling repos (EternalReddit, EternalDiscord) also apply to this product **except** where they conflict with this document or other native EternalX.Blazor requirements. **This repository wins on conflict.** Full rule: [`requirements-precedence.md`](requirements-precedence.md).
 
@@ -43,12 +43,14 @@ The application allows anonymous reading but requires authentication to post or 
 - When a user posts, the system automatically generates a **deep reply thread** (5–7 replies) from a rotating set of historical figures.
 - Supported AI providers (credentials supplied via environment variables):
   - Hugging Face (Inference API)
-  - Anthropic Claude (default provider)
+  - Anthropic Claude
   - OpenAI (ChatGPT)
-  - xAI Grok
-- Claude is configured as the **default provider** and defaults to using the operator's logged-in browser session cookies when available (for lower cost / higher limits during development).
+  - xAI Grok (default provider and model path when keys present; default model `grok-4.3`)
+- `DEFAULT_AI_PROVIDER` and per-provider model env vars (`XAI_MODEL`, etc.) configure selection.
+- Operators may **enable/disable providers in admin** without removing API keys (`FeedSettings.DisabledProviders`).
 - Replies must stay in character for each historical figure and produce **unlikely but on-point crossovers** between figures.
 - AI calls are made server-side only. No API keys are ever sent to the client.
+- Failed provider HTTP calls fall back to a deterministic stub and surface `lastError` on `/api/ai/status`.
 
 ### 2.4 Moderation System (Moderator AI)
 - Every new post and every AI-generated reply passes through a **Moderator AI** before being accepted.
@@ -70,13 +72,14 @@ The application allows anonymous reading but requires authentication to post or 
 - This keeps the feed alive and creates emergent conversations even when no human is posting.
 - The service respects rate limits and moderation rules.
 
-### 2.6 Social Interactions
+### 2.6 Social Interactions (X-style)
 - Authenticated users can:
-  - **Upvote** a post or reply (+1 karma)
-  - **Downvote** a post or reply (−1 karma)
-  - **Share** a post or specific reply (generates a clean, shareable link that opens directly to that item)
-- Vote counts and share counts are displayed and persisted.
-- Anonymous users can see vote counts but cannot vote or share.
+  - **Like** a post or reply (heart toggle; no downvotes)
+  - **Quote-reshare** a post as a **new post** (optional comment; not a reply in-thread)
+  - **Reply** in-thread under a post
+- Content supports **@mentions** (people/handles) and **#hashtags** (topics), stored and highlighted.
+- Anonymous users can see like/reshare counts but cannot like or reshare.
+- Admin can view **engagement by personality** (likes, reshares, replies, mentions, weighted score).
 
 ### 2.7 Data Persistence
 - All data is stored in **LiteDB** (embedded NoSQL database).
@@ -149,50 +152,45 @@ The application allows anonymous reading but requires authentication to post or 
 ## 5. Frontend (Blazor WebAssembly Client)
 
 Implemented X-style shell (FR-UI-001/002):
-- Top navigation: logo, AI provider chip, login/logout (gateway `/login` `/logout`), ban badge, admin link
-- Composer when authenticated (optional title, 280 counter)
-- Timeline with nested replies, AI provider/model badges
-- Action bars: upvote, downvote, share path, open deep link (`/post/{id}`)
-- SignalR hub `/hubs/feed` (`FeedChanged`) for near-real-time updates; 30s poll fallback if disconnected
-- Owner admin page: pause/resume auto-reply, seed, export, clear-feed, stats
-- Live AI: Claude/OpenAI/Grok/HuggingFace via env keys (stub only when no keys); dual key names supported
+- Left rail: Home, Admin (owner), login/logout, user card
+- Center column sticky header with AI status chip
+- Composer when authenticated (280 counter; @mentions / #hashtags)
+- Timeline with nested replies, AI provider/model badges, quote cards
+- Action bars: reply, quote-reshare, like (heart), open deep link (`/post/{id}`)
+- SignalR hub `/hubs/feed` (`FeedChanged`); poll fallback if disconnected
+- Owner admin: feed controls, AI agent enable/disable, engagement by personality
+- Live AI via env keys; stub when no keys or all agents disabled
 
-Deferred: share clipboard JS interop polish, FR-AI-009 scripted gag.
+Deferred: FR-AI-009 scripted gag; mention/hashtag search pages.
 
 ---
 
 ## 6. Current Implementation Status (as of 2026-07-13)
 
 **Completed:**
-- Gateway-only auth (`GATEWAY_KEY` + `X-Auth-*`); no local OIDC
-- LiteDB: posts, replies, figures, peer groups, users, votes, moderation logs, settings; idempotent seed; export/restore
-- Concurrent reply commits under lock (FR-CORE-006)
-- Rate limit 1 post/min/IP; moderation injection ban + NSFW block; health checks DB
-- AiService multi-provider (Claude/OpenAI/Grok/HF) with stub fallback; FigurePicker; deep thread 5-7; AutoReplyPolicy bounds + pause
-- APIs: feed, post, reply, vote, share, me, ai/status, admin/*
-- Blazor UI timeline, post page, admin page
-- SignalR feed push + live AI providers (HTTP mocked unit tests)
-- Unit tests covering LiteDB, votes, moderator, figure pick, deep thread, AI stub/live, auto-reply policy, gateway identity, UI helpers, feed notifier
+- Gateway-only auth; admin gated by `Authorization__AdminEmail`
+- LiteDB: posts/replies with likes, reshares, quotes, mentions/hashtags, figures, settings
+- Concurrent reply commits; rate limit; moderation; health + DB check
+- AiService multi-provider; Grok default model `grok-4.3`; agent toggles; personality engagement
+- APIs: feed, post, reply, like, reshare, me, ai/status, admin/* (agents, engagement)
+- Blazor UI: layout rail, timeline, post page, admin
+- SignalR feed push; unit tests green (64+ suite as of refresh)
 
 **Deferred / later:**
 - FR-AI-009 scripted gag
 - Production logging sinks
-- Live key smoke against real vendor endpoints (ops)
+- Hashtag/mention discovery surfaces
 
 ---
 
 ## 7. Open Questions / TBD
 
-- Should background auto-replies also be moderated by the Moderator AI? (Recommended: Yes)
 - Should banned users still be able to read anonymously? (Recommended: Yes)
-- Do we want to persist AI provider usage statistics per thread for analytics?
-- Should there be a "Featured" or "Trending" section driven by vote velocity?
-- Long-term storage strategy if LiteDB becomes a bottleneck (migration path to PostgreSQL or Cosmos DB).
+- Long-term storage if LiteDB becomes a bottleneck
 
 ---
 
-**Completeness of this requirements document: 94/100**  
-All major functional areas discussed in the conversation are captured. Minor gaps remain around exact UI copy, specific prompt templates for each historical figure, and detailed API contract definitions (these can be added in v1.1).
+**Completeness of this requirements document: 96/100**
 
 ---
 

@@ -10,8 +10,8 @@
     @if (_me is { Authenticated: true, IsBanned: false })
     {
         <div class="composer">
-            <input class="title-input" maxlength="100" @bind="_title" @bind:event="oninput" placeholder="Title (optional)" />
-            <textarea maxlength="280" @bind="_draft" @bind:event="oninput" placeholder="What's happening, mortal?"></textarea>
+            <textarea maxlength="280" @bind="_draft" @bind:event="oninput"
+                      placeholder="What's happening? Use @@mentions and #topics"></textarea>
             <div class="composer-bar">
                 <span class="counter">@(280 - (_draft?.Length ?? 0))</span>
                 <span class="status">@_status</span>
@@ -27,7 +27,7 @@
     }
     else if (_me is not null)
     {
-        <p class="login-hint">Read freely. <a href="@LoginHref()">Log in</a> to post.</p>
+        <p class="login-hint">Read freely. <a href="@LoginHref()">Log in</a> to post, like, and reshare.</p>
     }
 
     @if (_loading)
@@ -43,6 +43,10 @@
         @foreach (var post in _posts)
         {
             <article class="take">
+                @if (post.QuotedPostId is not null)
+                {
+                    <div class="reshare-label">&#8635; @post.Author quoted</div>
+                }
                 <div class="take-head">
                     <span class="who">@post.Author</span>
                     @if (post.IsAi)
@@ -51,21 +55,49 @@
                     }
                     <span class="hint">· @FeedFormatting.Ago(post.CreatedAt)</span>
                 </div>
-                @if (!string.IsNullOrWhiteSpace(post.Title))
+                @if (!string.IsNullOrWhiteSpace(post.Content))
                 {
-                    <div class="take-title">@post.Title</div>
+                    <div class="take-body"><ContentText Text="@post.Content" /></div>
                 }
-                <div class="take-body">@post.Content</div>
+                @if (post.QuotedPostId is not null)
+                {
+                    <div class="quote-card">
+                        <div class="take-head">
+                            <span class="who">@(post.QuotedAuthor ?? "…")</span>
+                            @if (post.QuotedIsAi)
+                            {
+                                <span class="ai-badge">AI</span>
+                            }
+                        </div>
+                        <div class="take-body quote-body"><ContentText Text="@post.QuotedContent" /></div>
+                        <a class="act link" href="@($"post/{post.QuotedPostId}")">View original</a>
+                    </div>
+                }
                 <div class="action-bar">
-                    <button class="act" disabled="@(!CanEngage)" @onclick="() => VotePost(post, 1)" title="Upvote">▲ @post.Upvotes</button>
-                    <button class="act down" disabled="@(!CanEngage)" @onclick="() => VotePost(post, -1)" title="Downvote">▼ @post.Downvotes</button>
-                    <span class="act score">@FeedFormatting.Score(post.Upvotes, post.Downvotes)</span>
-                    <button class="act" @onclick="() => Toggle(post.Id)">
-                        &#128172; @post.Replies.Count @(_open.Contains(post.Id) ? "▲" : "▼")
+                    <button class="act reply" @onclick="() => Toggle(post.Id)" title="Reply">
+                        &#128172; @post.Replies.Count
                     </button>
-                    <button class="act" disabled="@(!CanEngage)" @onclick="() => Share(post)" title="Share">↗ @post.ShareCount</button>
+                    <button class="act reshare" disabled="@(!CanEngage)" @onclick="() => BeginReshare(post)" title="Quote reshare">
+                        &#8635; @post.ReshareCount
+                    </button>
+                    <button class="act like" disabled="@(!CanEngage)" @onclick="() => LikePost(post)" title="Like">
+                        ♥ @post.LikeCount
+                    </button>
                     <a class="act link" href="@($"post/{post.Id}")">Open</a>
                 </div>
+                @if (_reshareFor == post.Id)
+                {
+                    <div class="reshare-composer">
+                        <textarea maxlength="280" @bind="_reshareComment" @bind:event="oninput"
+                                  placeholder="Add a comment (optional). This posts as a new take."></textarea>
+                        <div class="composer-bar">
+                            <button class="pill" @onclick="() => _reshareFor = null">Cancel</button>
+                            <button class="pill primary" @onclick="() => ConfirmReshare(post)" disabled="@_posting">
+                                Reshare
+                            </button>
+                        </div>
+                    </div>
+                }
                 @if (_open.Contains(post.Id))
                 {
                     <div class="replies">
@@ -80,23 +112,25 @@
                                     }
                                     <span class="hint">· @FeedFormatting.Ago(reply.CreatedAt)</span>
                                 </div>
-                                <div class="take-body">@reply.Content</div>
+                                <div class="take-body"><ContentText Text="@reply.Content" /></div>
                                 <div class="action-bar compact">
-                                    <button class="act" disabled="@(!CanEngage)" @onclick="() => VoteReply(post, reply, 1)">▲ @reply.Upvotes</button>
-                                    <button class="act down" disabled="@(!CanEngage)" @onclick="() => VoteReply(post, reply, -1)">▼ @reply.Downvotes</button>
+                                    <button class="act like" disabled="@(!CanEngage)" @onclick="() => LikeReply(post, reply)" title="Like">
+                                        ♥ @reply.LikeCount
+                                    </button>
                                 </div>
                             </div>
                         }
                         @if (CanEngage)
                         {
                             <div class="reply-composer">
-                                <textarea maxlength="280" @bind="_replyDrafts[post.Id]" @bind:event="oninput" placeholder="Reply..."></textarea>
+                                <textarea maxlength="280" @bind="_replyDrafts[post.Id]" @bind:event="oninput"
+                                          placeholder="Reply with @@mentions or #topics..."></textarea>
                                 <button class="pill primary" @onclick="() => Reply(post)" disabled="@string.IsNullOrWhiteSpace(GetReplyDraft(post.Id))">Reply</button>
                             </div>
                         }
                     </div>
                 }
-                @if (_shareMsg.TryGetValue(post.Id, out var sm))
+                @if (_statusMsg.TryGetValue(post.Id, out var sm))
                 {
                     <p class="share-msg">@sm</p>
                 }
@@ -110,12 +144,13 @@
     private List<Post> _posts = new();
     private readonly HashSet<Guid> _open = new();
     private readonly Dictionary<Guid, string> _replyDrafts = new();
-    private readonly Dictionary<Guid, string> _shareMsg = new();
+    private readonly Dictionary<Guid, string> _statusMsg = new();
     private bool _loading = true;
     private bool _posting;
     private string _draft = "";
-    private string _title = "";
     private string _status = "";
+    private Guid? _reshareFor;
+    private string _reshareComment = "";
     private System.Threading.Timer? _pollFallback;
 
     private bool CanEngage => _me is { Authenticated: true, IsBanned: false };
@@ -158,11 +193,10 @@
         _status = "";
         try
         {
-            var res = await Api.CreatePostAsync(_draft, string.IsNullOrWhiteSpace(_title) ? null : _title);
+            var res = await Api.CreatePostAsync(_draft);
             if (res.IsSuccessStatusCode)
             {
                 _draft = "";
-                _title = "";
                 await Load();
                 if (_posts.Count > 0) _open.Add(_posts[0].Id);
             }
@@ -196,29 +230,39 @@
             _status = "Reply failed.";
     }
 
-    private async Task VotePost(Post post, int value)
+    private async Task LikePost(Post post)
     {
-        var res = await Api.VotePostAsync(post.Id, value);
+        var res = await Api.LikePostAsync(post.Id);
         if (res.IsSuccessStatusCode) await Load();
     }
 
-    private async Task VoteReply(Post post, Reply reply, int value)
+    private async Task LikeReply(Post post, Reply reply)
     {
-        var res = await Api.VoteReplyAsync(post.Id, reply.Id, value);
+        var res = await Api.LikeReplyAsync(post.Id, reply.Id);
         if (res.IsSuccessStatusCode) await Load();
     }
 
-    private async Task Share(Post post)
+    private void BeginReshare(Post post)
     {
-        var res = await Api.SharePostAsync(post.Id);
-        if (!res.IsSuccessStatusCode)
+        _reshareFor = post.Id;
+        _reshareComment = "";
+        _statusMsg.Remove(post.Id);
+    }
+
+    private async Task ConfirmReshare(Post post)
+    {
+        _posting = true;
+        var res = await Api.ResharePostAsync(post.Id, string.IsNullOrWhiteSpace(_reshareComment) ? null : _reshareComment);
+        if (res.IsSuccessStatusCode)
         {
-            _shareMsg[post.Id] = "Share failed (log in?).";
-            return;
+            _reshareFor = null;
+            _reshareComment = "";
+            _statusMsg[post.Id] = "Quoted as a new post on your timeline.";
+            await Load();
         }
-        var link = Nav.ToAbsoluteUri($"post/{post.Id}").ToString();
-        _shareMsg[post.Id] = $"Link: {link}";
-        await Load();
+        else
+            _statusMsg[post.Id] = "Reshare failed (log in?).";
+        _posting = false;
     }
 
     private void Toggle(Guid id)
@@ -247,6 +291,5 @@
     {
         Realtime.FeedChanged -= OnFeedChanged;
         _pollFallback?.Dispose();
-        // Do not dispose scoped FeedRealtimeService; layout/navigation may still need it.
     }
 }

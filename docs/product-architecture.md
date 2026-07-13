@@ -40,7 +40,7 @@ Implications:
 
 ### EternalX (this repository)
 
-- Reproduces a **Twitter-based (X-style)** UI: timeline/feed-centric layout, post composer, threaded replies, engagement affordances (e.g. vote/share as specified in local requirements), profile-adjacent patterns as needed for the feed.
+- Reproduces a **Twitter-based (X-style)** UI: left rail, timeline/feed, composer, threaded replies, hearts (likes), quote-reshares as new posts, @mentions and #hashtags, owner admin (agents + personality engagement).
 - Native product requirements: [`REQUIREMENTS.md`](REQUIREMENTS.md).
 - Frontend work in this repo optimizes for the X/Twitter interaction model, not Reddit listing/sub community chrome or Discord channel/server chrome.
 

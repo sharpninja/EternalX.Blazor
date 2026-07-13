@@ -1,4 +1,5 @@
 using LiteDB;
+using EternalX.Blazor.Shared;
 using EternalX.Blazor.Shared.Models;
 
 namespace EternalX.Blazor.Server.Data;
@@ -152,12 +153,15 @@ public class LiteDbService
         }
     }
 
-    /// <summary>Apply a vote without nested DB opens (FR-CORE-007).</summary>
-    public async Task<Post?> ApplyPostVoteAsync(string userId, Guid postId, int value, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Toggle X-style like (heart). Only +1 / 0; downvotes are not used.
+    /// Returns (post, likedByUser).
+    /// </summary>
+    public async Task<(Post? Post, bool Liked)> TogglePostLikeAsync(
+        string userId,
+        Guid postId,
+        CancellationToken cancellationToken = default)
     {
-        if (value is not (-1 or 0 or 1))
-            throw new ArgumentOutOfRangeException(nameof(value));
-
         await _postLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -167,38 +171,46 @@ public class LiteDbService
                 var votes = db.GetCollection<Vote>("votes");
                 var post = posts.FindById(postId);
                 if (post is null)
-                    return null;
+                    return ((Post?)null, false);
 
                 var voteId = Vote.MakeId(userId, VoteTargetType.Post, postId);
                 var existing = votes.FindById(voteId);
-                var prev = existing?.Value ?? 0;
+                var wasLiked = existing is { Value: 1 };
 
-                if (prev == 1) post.Upvotes = Math.Max(0, post.Upvotes - 1);
-                if (prev == -1) post.Downvotes = Math.Max(0, post.Downvotes - 1);
-
-                if (value == 0)
+                if (wasLiked)
                 {
+                    // Unlike
+                    if (existing!.Value == -1)
+                        post.Downvotes = Math.Max(0, post.Downvotes - 1);
+                    post.Upvotes = Math.Max(0, post.Upvotes - 1);
                     votes.Delete(voteId);
+                    posts.Update(post);
+                    return (post, false);
                 }
-                else
+
+                // Like (clear any legacy downvote)
+                if (existing is { Value: -1 })
                 {
-                    if (value == 1) post.Upvotes++;
-                    if (value == -1) post.Downvotes++;
-                    var vote = new Vote
-                    {
-                        Id = voteId,
-                        UserId = userId,
-                        TargetType = VoteTargetType.Post,
-                        TargetId = postId,
-                        Value = value,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    if (existing is null) votes.Insert(vote);
-                    else votes.Update(vote);
+                    post.Downvotes = Math.Max(0, post.Downvotes - 1);
+                    votes.Delete(voteId);
+                    existing = null;
                 }
+
+                post.Upvotes++;
+                var vote = new Vote
+                {
+                    Id = voteId,
+                    UserId = userId,
+                    TargetType = VoteTargetType.Post,
+                    TargetId = postId,
+                    Value = 1,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                if (existing is null) votes.Insert(vote);
+                else votes.Update(vote);
 
                 posts.Update(post);
-                return post;
+                return (post, true);
             });
         }
         finally
@@ -207,16 +219,12 @@ public class LiteDbService
         }
     }
 
-    public async Task<Post?> ApplyReplyVoteAsync(
+    public async Task<(Post? Post, bool Liked)> ToggleReplyLikeAsync(
         string userId,
         Guid postId,
         Guid replyId,
-        int value,
         CancellationToken cancellationToken = default)
     {
-        if (value is not (-1 or 0 or 1))
-            throw new ArgumentOutOfRangeException(nameof(value));
-
         await _postLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -226,42 +234,87 @@ public class LiteDbService
                 var votes = db.GetCollection<Vote>("votes");
                 var post = posts.FindById(postId);
                 if (post is null)
-                    return null;
+                    return ((Post?)null, false);
 
                 var reply = post.Replies?.FirstOrDefault(r => r.Id == replyId);
                 if (reply is null)
-                    return null;
+                    return ((Post?)null, false);
 
                 var voteId = Vote.MakeId(userId, VoteTargetType.Reply, replyId);
                 var existing = votes.FindById(voteId);
-                var prev = existing?.Value ?? 0;
+                var wasLiked = existing is { Value: 1 };
 
-                if (prev == 1) reply.Upvotes = Math.Max(0, reply.Upvotes - 1);
-                if (prev == -1) reply.Downvotes = Math.Max(0, reply.Downvotes - 1);
-
-                if (value == 0)
+                if (wasLiked)
                 {
+                    if (existing!.Value == -1)
+                        reply.Downvotes = Math.Max(0, reply.Downvotes - 1);
+                    reply.Upvotes = Math.Max(0, reply.Upvotes - 1);
                     votes.Delete(voteId);
+                    posts.Update(post);
+                    return (post, false);
                 }
-                else
+
+                if (existing is { Value: -1 })
                 {
-                    if (value == 1) reply.Upvotes++;
-                    if (value == -1) reply.Downvotes++;
-                    var vote = new Vote
-                    {
-                        Id = voteId,
-                        UserId = userId,
-                        TargetType = VoteTargetType.Reply,
-                        TargetId = replyId,
-                        Value = value,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-                    if (existing is null) votes.Insert(vote);
-                    else votes.Update(vote);
+                    reply.Downvotes = Math.Max(0, reply.Downvotes - 1);
+                    votes.Delete(voteId);
+                    existing = null;
                 }
+
+                reply.Upvotes++;
+                var vote = new Vote
+                {
+                    Id = voteId,
+                    UserId = userId,
+                    TargetType = VoteTargetType.Reply,
+                    TargetId = replyId,
+                    Value = 1,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                if (existing is null) votes.Insert(vote);
+                else votes.Update(vote);
 
                 posts.Update(post);
-                return post;
+                return (post, true);
+            });
+        }
+        finally
+        {
+            _postLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Create a new timeline post that quotes another (X-style reshare with optional comment).
+    /// Not a reply: appears as its own post and increments the source ReshareCount.
+    /// </summary>
+    public async Task<Post?> CreateQuoteReshareAsync(
+        Guid sourcePostId,
+        Post quotePost,
+        CancellationToken cancellationToken = default)
+    {
+        await _postLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return WithDb(db =>
+            {
+                var posts = db.GetCollection<Post>("posts");
+                var source = posts.FindById(sourcePostId);
+                if (source is null)
+                    return null;
+
+                quotePost.QuotedPostId = source.Id;
+                quotePost.QuotedAuthor = source.Author;
+                quotePost.QuotedContent = source.Content;
+                quotePost.QuotedIsAi = source.IsAi;
+                quotePost.Mentions = ContentTags.ExtractMentions(quotePost.Content);
+                quotePost.Hashtags = ContentTags.ExtractHashtags(quotePost.Content);
+
+                posts.Insert(quotePost);
+
+                source.ShareCount++;
+                posts.Update(source);
+                return quotePost;
             });
         }
         finally

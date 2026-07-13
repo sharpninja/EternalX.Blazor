@@ -27,6 +27,24 @@ public static class AdminEndpoints
             });
         });
 
+        /// <summary>Engagement by historical personality (likes, reshares, replies, @mentions).</summary>
+        group.MapGet("/personalities/engagement", (HttpContext http, LiteDbService db, IConfiguration config) =>
+        {
+            if (!IsOwner(http, config)) return Results.Forbid();
+
+            var figures = db.GetFigures();
+            var posts = db.GetRecentPosts(count: 5000).ToList();
+            var rows = PersonalityEngagementCalculator.Calculate(figures, posts);
+
+            return Results.Ok(new
+            {
+                generatedAt = DateTime.UtcNow,
+                postSampleSize = posts.Count,
+                personalities = rows
+            });
+        });
+
+
         // AI agents (providers): enable/disable without removing Octopus API keys.
         group.MapGet("/agents", (HttpContext http, AiService ai, LiteDbService db, IConfiguration config) =>
         {

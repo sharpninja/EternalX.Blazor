@@ -25,20 +25,24 @@ public sealed class FeedApiClient
     public Task<HttpResponseMessage> CreateReplyAsync(Guid postId, string content)
         => _http.PostAsJsonAsync($"api/posts/{postId}/replies", new { Content = content });
 
-    public Task<HttpResponseMessage> VotePostAsync(Guid postId, int value)
-        => _http.PostAsJsonAsync($"api/posts/{postId}/vote", new { Value = value });
+    public Task<HttpResponseMessage> LikePostAsync(Guid postId)
+        => _http.PostAsync($"api/posts/{postId}/like", null);
 
-    public Task<HttpResponseMessage> VoteReplyAsync(Guid postId, Guid replyId, int value)
-        => _http.PostAsJsonAsync($"api/posts/{postId}/replies/{replyId}/vote", new { Value = value });
+    public Task<HttpResponseMessage> LikeReplyAsync(Guid postId, Guid replyId)
+        => _http.PostAsync($"api/posts/{postId}/replies/{replyId}/like", null);
 
-    public Task<HttpResponseMessage> SharePostAsync(Guid postId)
-        => _http.PostAsJsonAsync($"api/posts/{postId}/share", new { });
+    /// <summary>Quote-reshare as a new post (optional comment).</summary>
+    public Task<HttpResponseMessage> ResharePostAsync(Guid postId, string? comment = null)
+        => _http.PostAsJsonAsync($"api/posts/{postId}/reshare", new { Comment = comment });
 
     public Task<AdminStatsDto?> GetAdminStatsAsync()
         => _http.GetFromJsonAsync<AdminStatsDto>("api/admin/stats");
 
     public Task<AdminAgentsDto?> GetAdminAgentsAsync()
         => _http.GetFromJsonAsync<AdminAgentsDto>("api/admin/agents");
+
+    public Task<PersonalityEngagementReportDto?> GetPersonalityEngagementAsync()
+        => _http.GetFromJsonAsync<PersonalityEngagementReportDto>("api/admin/personalities/engagement");
 
     public Task<HttpResponseMessage> EnableAgentAsync(string name)
         => _http.PostAsync($"api/admin/agents/{Uri.EscapeDataString(name)}/enable", null);
@@ -108,3 +112,21 @@ public sealed record AgentDto(
     bool HasApiKey,
     bool Enabled,
     bool Active);
+
+public sealed record PersonalityEngagementReportDto(
+    DateTime GeneratedAt,
+    int PostSampleSize,
+    List<PersonalityEngagementDto>? Personalities);
+
+public sealed record PersonalityEngagementDto(
+    string FigureId,
+    string Name,
+    bool Enabled,
+    List<string>? PeerGroupIds,
+    int PostsAuthored,
+    int RepliesAuthored,
+    int LikesReceived,
+    int ResharesReceived,
+    int RepliesReceived,
+    int MentionsReceived,
+    int EngagementScore);

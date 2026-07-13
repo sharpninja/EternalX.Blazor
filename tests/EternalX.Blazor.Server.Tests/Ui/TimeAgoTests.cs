@@ -13,11 +13,29 @@ public class TimeAgoTests
         Assert.Equal("3h", FeedFormatting.Ago(now.AddHours(-3), now));
         Assert.Equal("2d", FeedFormatting.Ago(now.AddDays(-2), now));
     }
+}
+
+public class ContentTagsTests
+{
+    [Fact]
+    public void Extracts_mentions_and_hashtags()
+    {
+        var text = "Hello @Ada_Lovelace and @socrates about #math and #History!";
+        var mentions = ContentTags.ExtractMentions(text);
+        var tags = ContentTags.ExtractHashtags(text);
+
+        Assert.Contains("Ada_Lovelace", mentions);
+        Assert.Contains("socrates", mentions);
+        Assert.Contains("math", tags);
+        Assert.Contains("History", tags);
+    }
 
     [Fact]
-    public void Score_is_up_minus_down()
+    public void Tokenize_splits_segments()
     {
-        Assert.Equal(3, FeedFormatting.Score(5, 2));
-        Assert.Equal(-1, FeedFormatting.Score(0, 1));
+        var segs = ContentTags.Tokenize("See @Hypatia on #astronomy today");
+        Assert.Contains(segs, s => s.Kind == ContentTags.SegmentKind.Mention && s.Text == "@Hypatia");
+        Assert.Contains(segs, s => s.Kind == ContentTags.SegmentKind.Hashtag && s.Text == "#astronomy");
+        Assert.Contains(segs, s => s.Kind == ContentTags.SegmentKind.Text && s.Text.Contains("See"));
     }
 }

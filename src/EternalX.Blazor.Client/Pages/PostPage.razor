@@ -16,6 +16,10 @@
     else
     {
         <article class="take">
+            @if (_post.QuotedPostId is not null)
+            {
+                <div class="reshare-label">&#8635; @_post.Author quoted</div>
+            }
             <div class="take-head">
                 <span class="who">@_post.Author</span>
                 @if (_post.IsAi)
@@ -24,15 +28,23 @@
                 }
                 <span class="hint">· @FeedFormatting.Ago(_post.CreatedAt)</span>
             </div>
-            @if (!string.IsNullOrWhiteSpace(_post.Title))
+            @if (!string.IsNullOrWhiteSpace(_post.Content))
             {
-                <div class="take-title">@_post.Title</div>
+                <div class="take-body"><ContentText Text="@_post.Content" /></div>
             }
-            <div class="take-body">@_post.Content</div>
+            @if (_post.QuotedPostId is not null)
+            {
+                <div class="quote-card">
+                    <div class="take-head">
+                        <span class="who">@(_post.QuotedAuthor ?? "…")</span>
+                    </div>
+                    <div class="take-body quote-body"><ContentText Text="@_post.QuotedContent" /></div>
+                </div>
+            }
             <div class="action-bar">
-                <span class="act">▲ @_post.Upvotes</span>
-                <span class="act down">▼ @_post.Downvotes</span>
-                <span class="act">↗ @_post.ShareCount</span>
+                <span class="act reply">&#128172; @_post.Replies.Count</span>
+                <span class="act reshare">&#8635; @_post.ReshareCount</span>
+                <span class="act like">♥ @_post.LikeCount</span>
             </div>
             <div class="replies">
                 @foreach (var reply in _post.Replies)
@@ -46,7 +58,10 @@
                             }
                             <span class="hint">· @FeedFormatting.Ago(reply.CreatedAt)</span>
                         </div>
-                        <div class="take-body">@reply.Content</div>
+                        <div class="take-body"><ContentText Text="@reply.Content" /></div>
+                        <div class="action-bar compact">
+                            <span class="act like">♥ @reply.LikeCount</span>
+                        </div>
                     </div>
                 }
             </div>

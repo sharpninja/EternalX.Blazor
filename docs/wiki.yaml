@@ -44,16 +44,70 @@ documents:
   platforms:
   - github
   - azure
+- id: product-architecture
+  title: Product Architecture
+  source: docs/product-architecture.md
+  target: Product-Architecture.md
+  platforms:
+  - github
+  - azure
+- id: requirements-local
+  title: Product Requirements
+  source: docs/REQUIREMENTS.md
+  target: Product-Requirements.md
+  platforms:
+  - github
+  - azure
+- id: requirements-precedence
+  title: Requirements Precedence
+  source: docs/requirements-precedence.md
+  target: Requirements-Precedence.md
+  platforms:
+  - github
+  - azure
+- id: byrd-process
+  title: Byrd Development Process
+  source: docs/byrd-development-process.md
+  target: Byrd-Development-Process.md
+  platforms:
+  - github
+  - azure
+- id: deploy-octopus
+  title: Octopus Deploy
+  source: docs/deploy/octopus.md
+  target: Octopus-Deploy.md
+  platforms:
+  - github
+  - azure
+- id: requirement-groups
+  title: Requirement Groups
+  source: docs/Project/requirement-groups.md
+  target: Requirement-Groups.md
+  platforms:
+  - github
+  - azure
 navigation:
 - document: home
-  children: &o0 []
+  children: []
 - document: functional
-  children: *o0
+  children: []
 - document: technical
-  children: *o0
+  children: []
 - document: testing
-  children: *o0
+  children: []
 - document: mapping
-  children: *o0
+  children: []
 - document: matrix
-  children: *o0
+  children: []
+- document: product-architecture
+  children: []
+- document: requirements-local
+  children: []
+- document: requirements-precedence
+  children: []
+- document: byrd-process
+  children: []
+- document: deploy-octopus
+  children: []
+- document: requirement-groups
+  children: []

@@ -1,0 +1,23 @@
+@using EternalX.Blazor.Shared
+
+<span class="content-text">
+@foreach (var seg in ContentTags.Tokenize(Text))
+{
+    @if (seg.Kind == ContentTags.SegmentKind.Mention)
+    {
+        <span class="mention">@seg.Text</span>
+    }
+    else if (seg.Kind == ContentTags.SegmentKind.Hashtag)
+    {
+        <span class="hashtag">@seg.Text</span>
+    }
+    else
+    {
+        @seg.Text
+    }
+}
+</span>
+
+@code {
+    [Parameter] public string? Text { get; set; }
+}

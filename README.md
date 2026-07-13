@@ -1,70 +1,64 @@
 # EternalX.Blazor
 
-A full-featured Blazor WebAssembly Hosted application running in Docker.
+Blazor WebAssembly Hosted (Client + Server) social feed in Docker, behind the EternalSocial gateway.
 
-**Eternal network:** shares core data and AI interaction semantics with EternalReddit and EternalDiscord; this product's UI is **Twitter / X-style** (siblings: classic Reddit UI, Discord chat UI). Each agent owns a **unique implementation** of shared requirements in their own repo (GrokCode here). See [`docs/product-architecture.md`](docs/product-architecture.md).
+**Eternal network:** shared core data and AI semantics with EternalReddit and EternalDiscord; this product's UI is **Twitter / X-style**. GrokCode owns a **unique implementation** in this repo. See [`docs/product-architecture.md`](docs/product-architecture.md).
 
 ## Features
-- Anonymous reading of the Eternal Feed
-- Authentication via EternalSocial gateway only (`GATEWAY_KEY` + `X-Auth-*`; no local OIDC)
-- Real AI replies from Claude, OpenAI, Grok, or Hugging Face (keys via environment variables)
-- Moderator AI that blocks NSFW content and prompt injection attempts
-- Automatic ban on prompt injection
-- Rate limiting: 1 post per minute per IP address
-- Background service that auto-generates interesting replies every 10 seconds
-- Upvote, downvote, and share functionality
-- LiteDB persistence
 
-## Running with Docker
+- **X-style timeline** with left rail (Home, Admin for owner), composer, and nested replies
+- **Gateway-only auth** (`GATEWAY_KEY` + `X-Auth-*`); no local OIDC
+- **Likes (hearts)** and **quote-reshares** (new post quoting another, not a reply)
+- **@mentions** and **#hashtags** parsed and highlighted
+- Server-side AI replies from historical figures (Claude, OpenAI, Grok, Hugging Face)
+- Default AI provider: **Grok** (`DEFAULT_AI_PROVIDER`, model default `grok-4.3`)
+- Admin can **enable/disable AI agents** without removing API keys
+- **Engagement by personality** ranking (likes, reshares, replies, mentions)
+- Moderator blocks NSFW and prompt injection (injection auto-bans)
+- Rate limit: 1 post per minute per IP
+- Background auto-reply with quiet gap and reply caps
+- SignalR feed updates (`/hubs/feed`) with poll fallback
+- LiteDB on volume `eternalx-data` (`/app/data`)
 
-1. Copy `.env.example` to `.env` and fill in AI keys, required `GATEWAY_KEY` (shared with the proxy), and optional `NGROK_AUTHTOKEN`.
-2. Run:
+## Quick start (Docker)
+
+1. Copy `.env.example` to `.env`. Set `GATEWAY_KEY` and at least one AI key (e.g. `XAI_API_KEY`).
+2. Optional: `PATH_BASE=/x`, `Authorization__AdminEmail` for admin UI.
+3. Run:
    ```bash
    docker-compose up --build
    ```
-3. Open http://localhost:8080
+4. Open http://localhost:8080 (or the gateway path `/x` in estate mode).
 
-### Using ngrok (recommended for OAuth testing)
+### Estate / gateway
 
-ngrok is included as a sidecar service. It provides a public HTTPS URL for your local instance.
-
-- Get your free authtoken at https://dashboard.ngrok.com
-- Add it to `.env` as `NGROK_AUTHTOKEN`
-- After `docker-compose up`, visit http://localhost:4040 to see the public URL (e.g. `https://xxxx.ngrok.io`)
-- OAuth redirect URIs belong on the **gateway**, not this site.
-
-## Important Notes
-- You (the developer) supply the AI API keys in the `.env` file.
-- Users authenticate via the EternalSocial proxy; EternalX never runs local OIDC.
-- The Moderator runs on every new post.
-- The Auto-Reply service runs continuously in the background.
+- Path base `/x`, network `eternal`, no public host ports in production.
+- Login/logout: gateway `/login` and `/logout`.
+- Deploy: `deploy/octopus-deploy.ps1` (injects AI keys + `Authorization__AdminEmail` from Octopus).
 
 ## Documentation
 
-- **Process (mandatory):** all work must follow [Byrd Development Process v4](docs/byrd-development-process.md) (canonical source: McpServer `docs/Development-Process-draft-v4.md`)
-- **Requirements precedence:** sibling `docs/` requirements apply unless they conflict with this repo; local wins ([`docs/requirements-precedence.md`](docs/requirements-precedence.md))
-- Product architecture (shared core / divergent UI): [`docs/product-architecture.md`](docs/product-architecture.md)
-- Requirement groups (UI / AI / Core): [docs/Project/requirement-groups.md](docs/Project/requirement-groups.md)
-- Product requirements: [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md)
-- Octopus Deploy configuration: [`docs/deploy/octopus.md`](docs/deploy/octopus.md)
+| Doc | Purpose |
+|-----|---------|
+| [`docs/byrd-development-process.md`](docs/byrd-development-process.md) | BDP v4 (mandatory) |
+| [`docs/requirements-precedence.md`](docs/requirements-precedence.md) | Sibling vs local precedence |
+| [`docs/product-architecture.md`](docs/product-architecture.md) | Shared core / divergent UI |
+| [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Product requirements (local) |
+| [`docs/Project/requirement-groups.md`](docs/Project/requirement-groups.md) | UI / AI / Core groups |
+| [`docs/deploy/octopus.md`](docs/deploy/octopus.md) | Octopus variables and deploy |
+| [`docs/wiki.yaml`](docs/wiki.yaml) | Wiki publish manifest |
 
-## Deployment with Octopus Deploy
+## Development
 
-See [`docs/deploy/octopus.md`](docs/deploy/octopus.md) for full configuration instructions.
+```bash
+dotnet test EternalX.Blazor.slnx
+dotnet build EternalX.Blazor.slnx
+```
 
-**Quick Summary:**
-- Build and push Docker image to your container registry
-- Create Octopus Project "EternalX"
-- Add the sensitive variables listed in `docs/deploy/octopus.md`
-- Use the **Deploy Docker Container** step
-- Map Octopus variables to container environment variables
-- LiteDB data persists via a mounted volume at `/app/data`
+Agent: **GrokCode** via `mcpserver-grok-plugin`. Marker: `AGENTS-README-FIRST.yaml`.
 
-## Next Steps / TODO
-- Implement full frontend (Blazor Client pages for feed, composer, replies, voting)
-- Complete the API controllers for Posts/Replies
-- Add proper error handling and logging
-- Improve the AI prompt engineering for historical figures
-- Add real API calls for all four providers in AiService
+## Notes
 
-This is a complete backend foundation ready for frontend development and Octopus Deploy.
+- AI credentials and `GATEWAY_KEY` are environment-only (Sensitive in Octopus).
+- Users never hold AI keys; generation is server-side only.
+- Remotes: `origin` = GitHub; `azure` = Azure DevOps mirror when configured.

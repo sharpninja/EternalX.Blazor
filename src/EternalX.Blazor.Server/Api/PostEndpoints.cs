@@ -11,7 +11,8 @@ public static class PostEndpoints
 {
     public sealed record CreatePostBody(string Content, string? Title = null);
     public sealed record CreateReplyBody(string Content);
-    public sealed record VoteBody(int Value);
+    /// <summary>Optional comment when quote-resharing as a new post.</summary>
+    public sealed record ReshareBody(string? Comment = null);
 
     public static IEndpointRouteBuilder MapPostEndpoints(this IEndpointRouteBuilder app)
     {
@@ -122,14 +123,17 @@ public static class PostEndpoints
                          ?? http.User.Identity?.Name
                          ?? "Member";
 
+            var text = body.Content.Trim();
             var post = new Post
             {
-                Content = body.Content.Trim(),
+                Content = text,
                 Title = string.IsNullOrWhiteSpace(body.Title) ? null : body.Title.Trim(),
                 Author = author,
                 AuthorUserId = userId,
                 IsAi = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                Mentions = ContentTags.ExtractMentions(text),
+                Hashtags = ContentTags.ExtractHashtags(text)
             };
 
             db.SavePost(post);
@@ -178,13 +182,16 @@ public static class PostEndpoints
                          ?? http.User.Identity?.Name
                          ?? "Member";
 
+            var text = body.Content.Trim();
             var reply = new Reply
             {
-                Content = body.Content.Trim(),
+                Content = text,
                 Author = author,
                 AuthorUserId = userId,
                 IsAi = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                Mentions = ContentTags.ExtractMentions(text),
+                Hashtags = ContentTags.ExtractHashtags(text)
             };
 
             var updated = await db.CommitReplyAsync(id, reply, ct).ConfigureAwait(false);
@@ -194,69 +201,105 @@ public static class PostEndpoints
             return Results.Ok(updated);
         }).RequireAuthorization();
 
-        app.MapPost("/api/posts/{id:guid}/vote", async (
+        // X-style heart (like) toggle — no downvotes.
+        app.MapPost("/api/posts/{id:guid}/like", async (
             LiteDbService db,
             IFeedNotifier notifier,
             HttpContext http,
             Guid id,
-            VoteBody body,
             CancellationToken ct) =>
         {
             var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Results.Unauthorized();
-            if (body.Value is not (-1 or 0 or 1))
-                return Results.BadRequest("Value must be -1, 0, or 1.");
 
-            var updated = await db.ApplyPostVoteAsync(userId, id, body.Value, ct).ConfigureAwait(false);
+            var (updated, liked) = await db.TogglePostLikeAsync(userId, id, ct).ConfigureAwait(false);
             if (updated is null)
                 return Results.NotFound();
             await notifier.NotifyAsync(FeedEvents.KindVoteChanged, id, ct).ConfigureAwait(false);
-            return Results.Ok(updated);
+            return Results.Ok(new { post = updated, liked, likeCount = updated.LikeCount });
         }).RequireAuthorization();
 
-        app.MapPost("/api/posts/{postId:guid}/replies/{replyId:guid}/vote", async (
+        app.MapPost("/api/posts/{postId:guid}/replies/{replyId:guid}/like", async (
             LiteDbService db,
             IFeedNotifier notifier,
             HttpContext http,
             Guid postId,
             Guid replyId,
-            VoteBody body,
             CancellationToken ct) =>
         {
             var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Results.Unauthorized();
-            if (body.Value is not (-1 or 0 or 1))
-                return Results.BadRequest("Value must be -1, 0, or 1.");
 
-            var updated = await db.ApplyReplyVoteAsync(userId, postId, replyId, body.Value, ct)
+            var (updated, liked) = await db.ToggleReplyLikeAsync(userId, postId, replyId, ct)
                 .ConfigureAwait(false);
             if (updated is null)
                 return Results.NotFound();
             await notifier.NotifyAsync(FeedEvents.KindVoteChanged, postId, ct).ConfigureAwait(false);
-            return Results.Ok(updated);
+            return Results.Ok(new { post = updated, liked, replyId });
         }).RequireAuthorization();
 
-        app.MapPost("/api/posts/{id:guid}/share", async (
+        // X-style quote-reshare: creates a NEW post quoting the source (not a reply).
+        app.MapPost("/api/posts/{id:guid}/reshare", async (
             LiteDbService db,
+            ModeratorService moderator,
             IFeedNotifier notifier,
             HttpContext http,
             Guid id,
+            ReshareBody? body,
             CancellationToken ct) =>
         {
-            if (http.User.Identity?.IsAuthenticated != true)
+            var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
                 return Results.Unauthorized();
+            if (db.IsUserBanned(userId))
+                return Results.Json(new { error = "You are banned from posting." }, statusCode: StatusCodes.Status403Forbidden);
 
-            var updated = await db.UpdatePostLockedAsync(id, p => p.ShareCount++, ct).ConfigureAwait(false);
-            if (updated is null)
+            var comment = (body?.Comment ?? string.Empty).Trim();
+            if (comment.Length > 280)
+                return Results.BadRequest("280 characters max.");
+
+            if (!string.IsNullOrEmpty(comment))
+            {
+                var ip = http.Connection.RemoteIpAddress?.ToString();
+                var check = moderator.EvaluateAndRecord(comment, userId, ip);
+                if (!check.Allowed)
+                    return Results.UnprocessableEntity(check.Reason);
+            }
+
+            var author = http.User.FindFirst(ClaimTypes.Name)?.Value
+                         ?? http.User.Identity?.Name
+                         ?? "Member";
+
+            var quote = new Post
+            {
+                Content = string.IsNullOrEmpty(comment) ? string.Empty : comment,
+                Author = author,
+                AuthorUserId = userId,
+                IsAi = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var created = await db.CreateQuoteReshareAsync(id, quote, ct).ConfigureAwait(false);
+            if (created is null)
                 return Results.NotFound();
 
+            await notifier.NotifyAsync(FeedEvents.KindPostCreated, created.Id, ct).ConfigureAwait(false);
             await notifier.NotifyAsync(FeedEvents.KindShare, id, ct).ConfigureAwait(false);
+            return Results.Created($"/api/posts/{created.Id}", created);
+        }).RequireAuthorization();
 
-            var pathBase = (http.Request.PathBase.Value ?? "").TrimEnd('/');
-            var path = $"{pathBase}/post/{id}";
-            return Results.Ok(new { shareCount = updated.ShareCount, path, url = path });
+        // Legacy aliases (clients may still call these briefly).
+        app.MapPost("/api/posts/{id:guid}/vote", async (
+            LiteDbService db, IFeedNotifier notifier, HttpContext http, Guid id, CancellationToken ct) =>
+        {
+            var userId = http.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Results.Unauthorized();
+            var (updated, liked) = await db.TogglePostLikeAsync(userId, id, ct).ConfigureAwait(false);
+            if (updated is null) return Results.NotFound();
+            await notifier.NotifyAsync(FeedEvents.KindVoteChanged, id, ct).ConfigureAwait(false);
+            return Results.Ok(updated);
         }).RequireAuthorization();
 
         return app;

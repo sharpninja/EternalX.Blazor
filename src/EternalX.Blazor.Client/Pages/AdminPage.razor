@@ -28,6 +28,71 @@
         }
 
         <section class="admin-section">
+            <h3 class="admin-sub">Engagement by personality</h3>
+            <p class="hint">
+                Ranked by score: likes + 2×reshares + replies on their posts + @@mentions.
+                Sample size: @(_engagement?.PostSampleSize ?? 0) posts.
+            </p>
+            <div class="admin-actions">
+                <button class="pill" @onclick="RefreshEngagement" disabled="@_busy">Refresh ranking</button>
+            </div>
+            @if (_personalities is null)
+            {
+                <p class="hint">Loading engagement...</p>
+            }
+            else if (_personalities.Count == 0)
+            {
+                <p class="hint">No personalities in roster.</p>
+            }
+            else
+            {
+                <div class="eng-table-wrap">
+                    <table class="eng-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Personality</th>
+                                <th>Score</th>
+                                <th title="Hearts on their posts and replies">♥</th>
+                                <th title="Quote-reshares of their posts">↻</th>
+                                <th title="Replies under their posts">💬</th>
+                                <th title="Mentions of their name">@@</th>
+                                <th>Posts</th>
+                                <th>Replies</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var rank = 0;
+                            }
+                            @foreach (var row in _personalities)
+                            {
+                                rank++;
+                                <tr class="@(row.Enabled ? "" : "eng-disabled")">
+                                    <td>@rank</td>
+                                    <td class="eng-name">
+                                        @row.Name
+                                        @if (!row.Enabled)
+                                        {
+                                            <span class="agent-pill off">benched</span>
+                                        }
+                                    </td>
+                                    <td class="eng-score">@row.EngagementScore</td>
+                                    <td>@row.LikesReceived</td>
+                                    <td>@row.ResharesReceived</td>
+                                    <td>@row.RepliesReceived</td>
+                                    <td>@row.MentionsReceived</td>
+                                    <td>@row.PostsAuthored</td>
+                                    <td>@row.RepliesAuthored</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <section class="admin-section">
             <h3 class="admin-sub">AI agents</h3>
             <p class="hint">
                 Disable an agent to stop using it without removing its API key from Octopus.
@@ -117,6 +182,8 @@
     private MeDto? _me;
     private AdminStatsDto? _stats;
     private List<AgentDto> _agents = new();
+    private PersonalityEngagementReportDto? _engagement;
+    private List<PersonalityEngagementDto>? _personalities;
     private string _defaultProvider = "grok";
     private string _status = "";
     private bool _busy;
@@ -128,6 +195,7 @@
         {
             await RefreshStats();
             await RefreshAgents();
+            await RefreshEngagement();
         }
     }
 
@@ -149,6 +217,23 @@
             }
         }
         catch { _status = "Could not load agents."; }
+    }
+
+    private async Task RefreshEngagement()
+    {
+        try
+        {
+            _engagement = await Api.GetPersonalityEngagementAsync();
+            _personalities = _engagement?.Personalities ?? new();
+            _status = _engagement is null
+                ? "Could not load personality engagement."
+                : $"Engagement ranked over {_engagement.PostSampleSize} posts.";
+        }
+        catch
+        {
+            _personalities = new();
+            _status = "Could not load personality engagement.";
+        }
     }
 
     private async Task EnableAgent(string name)

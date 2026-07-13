@@ -11,6 +11,4 @@ public static class FeedFormatting
         if (d.TotalHours < 24) return $"{(int)d.TotalHours}h";
         return $"{(int)d.TotalDays}d";
     }
-
-    public static int Score(int upvotes, int downvotes) => upvotes - downvotes;
 }
