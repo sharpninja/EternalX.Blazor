@@ -1,0 +1,200 @@
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 110.4547ms - 400
+      End processing HTTP request after 110.5573ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 108.1586ms - 400
+      End processing HTTP request after 108.2673ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 172.1583ms - 400
+      End processing HTTP request after 172.2565ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 109.7111ms - 400
+      End processing HTTP request after 109.8104ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 191.3016ms - 400
+      End processing HTTP request after 191.4032ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 104.8718ms - 400
+      End processing HTTP request after 104.9753ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 186.1945ms - 400
+      End processing HTTP request after 186.2937ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 194.8456ms - 400
+      End processing HTTP request after 194.9468ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 179.8223ms - 400
+      End processing HTTP request after 179.9357ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 100.36ms - 400
+      End processing HTTP request after 100.4604ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 217.1961ms - 400
+      End processing HTTP request after 217.3254ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 222.0809ms - 400
+      End processing HTTP request after 222.1827ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 101.7236ms - 400
+      End processing HTTP request after 101.8247ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 401.5107ms - 400
+      End processing HTTP request after 401.6069ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 166.7295ms - 400
+      End processing HTTP request after 166.8298ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 185.053ms - 400
+      End processing HTTP request after 185.1863ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 103.9929ms - 400
+      End processing HTTP request after 104.0962ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 237.9082ms - 400
+      End processing HTTP request after 237.9802ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 159.6831ms - 400
+      End processing HTTP request after 159.7707ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 198.8895ms - 400
+      End processing HTTP request after 198.9834ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 140.3832ms - 400
+      End processing HTTP request after 140.5092ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 125.4758ms - 400
+      End processing HTTP request after 125.5753ms - 400
+fail: EternalReddit.Server.Services.AutoReplyBackgroundService[0]
+      Auto-reply tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 104
+         at EternalReddit.Server.Services.AutoReplyBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/AutoReplyBackgroundService.cs:line 63
+      Received HTTP response headers after 291.2427ms - 400
+      End processing HTTP request after 291.34ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+      Received HTTP response headers after 294.3626ms - 400
+      End processing HTTP request after 294.4594ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+      Received HTTP response headers after 105.0198ms - 400
+      End processing HTTP request after 105.1202ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+info: EternalReddit.Server.Services.CharacterPostBackgroundService[0]
+      Received HTTP response headers after 355.4643ms - 400
+      End processing HTTP request after 355.6335ms - 400
+fail: EternalReddit.Server.Services.CharacterPostBackgroundService[0]
+      Character-post tick failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.CharacterPostBackgroundService.TickAsync(CancellationToken ct) in /src/src/EternalReddit.Server/Services/CharacterPostBackgroundService.cs:line 85
+         at EternalReddit.Server.Services.CharacterPostBackgroundService.ExecuteAsync(CancellationToken stoppingToken) in /src/src/EternalReddit.Server/Services/CharacterPostBackgroundService.cs:line 57
+      Received HTTP response headers after 257.014ms - 400
+      End processing HTTP request after 257.0979ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+      Received HTTP response headers after 150.4915ms - 400
+      End processing HTTP request after 150.5764ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+      Received HTTP response headers after 141.9046ms - 400
+      End processing HTTP request after 142.0346ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+info: EternalReddit.Server.Services.CharacterPostBackgroundService[0]

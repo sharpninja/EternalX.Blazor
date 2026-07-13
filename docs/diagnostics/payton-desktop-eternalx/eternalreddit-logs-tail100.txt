@@ -1,0 +1,100 @@
+      Character post created by Morgan le Fay
+info: System.Net.Http.HttpClient.Default.LogicalHandler[100]
+      Start processing HTTP request POST https://api.anthropic.com/v1/messages
+info: System.Net.Http.HttpClient.Default.ClientHandler[100]
+      Sending HTTP request POST https://api.anthropic.com/v1/messages
+info: System.Net.Http.HttpClient.Default.ClientHandler[101]
+      Received HTTP response headers after 257.014ms - 400
+info: System.Net.Http.HttpClient.Default.LogicalHandler[101]
+      End processing HTTP request after 257.0979ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+         at EternalReddit.Server.Services.Ai.ClaudeProvider.CompleteAsync(String system, String user, Int32 maxTokens, String model, String effort, CancellationToken ct) in /src/src/EternalReddit.Server/Services/Ai/Providers.cs:line 53
+         at EternalReddit.Server.Services.Ai.ReplyGenerator.GenerateReplyBodyAsync(Post post, IReadOnlyList`1 branch, String figure, String persona, String parentFigure, AiProvider provider, AiContext ctx, CancellationToken ct) in /src/src/EternalReddit.Server/Services/Ai/ReplyGenerator.cs:line 52
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+info: System.Net.Http.HttpClient.Default.LogicalHandler[100]
+      Start processing HTTP request POST https://api.x.ai/v1/chat/completions
+info: System.Net.Http.HttpClient.Default.ClientHandler[100]
+      Sending HTTP request POST https://api.x.ai/v1/chat/completions
+info: System.Net.Http.HttpClient.Default.ClientHandler[101]
+      Received HTTP response headers after 5602.4387ms - 200
+info: System.Net.Http.HttpClient.Default.LogicalHandler[101]
+      End processing HTTP request after 5602.5402ms - 200
+info: EternalReddit.Server.Services.PostService[0]
+      Morgan le Fay replied to the post via Grok
+info: System.Net.Http.HttpClient.Default.LogicalHandler[100]
+      Start processing HTTP request POST https://api.anthropic.com/v1/messages
+info: System.Net.Http.HttpClient.Default.ClientHandler[100]
+      Sending HTTP request POST https://api.anthropic.com/v1/messages
+info: System.Net.Http.HttpClient.Default.ClientHandler[101]
+      Received HTTP response headers after 150.4915ms - 400
+info: System.Net.Http.HttpClient.Default.LogicalHandler[101]
+      End processing HTTP request after 150.5764ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+         at EternalReddit.Server.Services.Ai.ClaudeProvider.CompleteAsync(String system, String user, Int32 maxTokens, String model, String effort, CancellationToken ct) in /src/src/EternalReddit.Server/Services/Ai/Providers.cs:line 53
+         at EternalReddit.Server.Services.Ai.ReplyGenerator.GenerateReplyBodyAsync(Post post, IReadOnlyList`1 branch, String figure, String persona, String parentFigure, AiProvider provider, AiContext ctx, CancellationToken ct) in /src/src/EternalReddit.Server/Services/Ai/ReplyGenerator.cs:line 52
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+info: System.Net.Http.HttpClient.Default.LogicalHandler[100]
+      Start processing HTTP request POST https://api.x.ai/v1/chat/completions
+info: System.Net.Http.HttpClient.Default.ClientHandler[100]
+      Sending HTTP request POST https://api.x.ai/v1/chat/completions
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:8080/health - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'Health checks'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'Health checks'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:8080/health - 200 - text/plain 0.1988ms
+info: System.Net.Http.HttpClient.Default.ClientHandler[101]
+      Received HTTP response headers after 7799.1461ms - 200
+info: System.Net.Http.HttpClient.Default.LogicalHandler[101]
+      End processing HTTP request after 7799.2372ms - 200
+info: EternalReddit.Server.Services.PostService[0]
+      Beowulf replied to the post via Grok
+info: System.Net.Http.HttpClient.Default.LogicalHandler[100]
+      Start processing HTTP request POST https://api.anthropic.com/v1/messages
+info: System.Net.Http.HttpClient.Default.ClientHandler[100]
+      Sending HTTP request POST https://api.anthropic.com/v1/messages
+info: System.Net.Http.HttpClient.Default.ClientHandler[101]
+      Received HTTP response headers after 141.9046ms - 400
+info: System.Net.Http.HttpClient.Default.LogicalHandler[101]
+      End processing HTTP request after 142.0346ms - 400
+fail: EternalReddit.Server.Services.PostService[0]
+      Reply generation via Claude failed
+      System.Net.Http.HttpRequestException: Response status code does not indicate success: 400 (Bad Request).
+         at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+         at EternalReddit.Server.Services.Ai.ClaudeProvider.CompleteAsync(String system, String user, Int32 maxTokens, String model, String effort, CancellationToken ct) in /src/src/EternalReddit.Server/Services/Ai/Providers.cs:line 53
+         at EternalReddit.Server.Services.Ai.ReplyGenerator.GenerateReplyBodyAsync(Post post, IReadOnlyList`1 branch, String figure, String persona, String parentFigure, AiProvider provider, AiContext ctx, CancellationToken ct) in /src/src/EternalReddit.Server/Services/Ai/ReplyGenerator.cs:line 52
+         at EternalReddit.Server.Services.PostService.GenerateReplyInto(Post post, AiProvider provider, Boolean background, CancellationToken ct) in /src/src/EternalReddit.Server/Services/PostService.cs:line 425
+info: EternalReddit.Server.Services.CharacterPostBackgroundService[0]
+      Morgan le Fay started an original post in r/roundtable after a quiet hour
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:8080/health - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'Health checks'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'Health checks'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:8080/health - 200 - text/plain 0.1867ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:8080/health - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'Health checks'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'Health checks'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:8080/health - 200 - text/plain 0.1407ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/1.1 GET http://localhost:8080/health - - -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'Health checks'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'Health checks'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/1.1 GET http://localhost:8080/health - 200 - text/plain 0.2179ms

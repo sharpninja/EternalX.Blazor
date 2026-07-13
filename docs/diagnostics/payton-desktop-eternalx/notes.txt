@@ -1,0 +1,10 @@
+run: 2813446e8b66fa960c0a7bec07825c6b16510c8f977aac8ffaa204f662891606
+ exit=0
+cp:  exit=0
+list: /data:
+total 12188
+drwxr-xr-x 2 app  app      4096 Jul 13 10:21 .
+drwxr-xr-x 1 root root     4096 Jul 13 18:21 ..
+-rw-r--r-- 1 app  app  12468224 Jul 13 10:21 eternalx.db
+
+redditLogBytes=4937739 modHits=5596

@@ -1,0 +1,37 @@
+{
+    "stage":  "C:\\Users\\kingd\\AppData\\Local\\Temp\\eternalx-pull-34b92b9365a24eabafe476ac5114fbc0",
+    "files":  [
+                  {
+                      "path":  "stage:container-status.txt",
+                      "length":  62,
+                      "isDir":  false
+                  },
+                  {
+                      "path":  "stage:docker-logs-full.txt",
+                      "length":  3570,
+                      "isDir":  false
+                  },
+                  {
+                      "path":  "stage:docker-logs-tail500.txt",
+                      "length":  3570,
+                      "isDir":  false
+                  },
+                  {
+                      "path":  "stage:helper-run.txt",
+                      "length":  580,
+                      "isDir":  false
+                  },
+                  {
+                      "path":  "stage:inspect.json",
+                      "length":  10228,
+                      "isDir":  false
+                  }
+              ],
+    "notes":  [
+                  "helper container failed",
+                  "mountpoint=/var/lib/docker/volumes/eternalx-data/_data"
+              ],
+    "logBytes":  3570,
+    "moderationLineCount":  0,
+    "errorLineCount":  1
+}

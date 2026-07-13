@@ -1,0 +1,261 @@
+[
+    {
+        "Id": "cd5f654e1442ac057e907032537255f809576f7c8b28538eef09539128c3ffab",
+        "Created": "2026-07-13T10:20:10.906890476Z",
+        "Path": "dotnet",
+        "Args": [
+            "EternalX.Blazor.Server.dll"
+        ],
+        "State": {
+            "Status": "exited",
+            "Running": false,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 0,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-07-13T10:20:11.039521448Z",
+            "FinishedAt": "2026-07-13T10:21:40.246383621Z",
+            "Health": {
+                "Status": "unhealthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2026-07-13T10:20:16.223112202Z",
+                        "End": "2026-07-13T10:20:16.389531259Z",
+                        "ExitCode": 0,
+                        "Output": "  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\r  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0Healthy\r100     7    0     7    0     0     95      0 --:--:-- --:--:-- --:--:--    95\n"
+                    },
+                    {
+                        "Start": "2026-07-13T10:20:46.389378858Z",
+                        "End": "2026-07-13T10:20:46.468993598Z",
+                        "ExitCode": 0,
+                        "Output": "  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\r  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\r100     7    0     7    0     0   1471      0 --:--:-- --:--:-- --:--:--  1750\nHealthy"
+                    },
+                    {
+                        "Start": "2026-07-13T10:21:16.46849014Z",
+                        "End": "2026-07-13T10:21:16.544438589Z",
+                        "ExitCode": 0,
+                        "Output": "  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\r  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\r100     7    0     7    0     0   1569      0 --:--:-- --:--:-- --:--:--  1750\nHealthy"
+                    }
+                ]
+            }
+        },
+        "Image": "sha256:a8d7499dbf685e1a8297042f35d205c0cc83f9472d8a4486f39da1155a53c349",
+        "ResolvConfPath": "/var/lib/docker/containers/cd5f654e1442ac057e907032537255f809576f7c8b28538eef09539128c3ffab/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/cd5f654e1442ac057e907032537255f809576f7c8b28538eef09539128c3ffab/hostname",
+        "HostsPath": "/var/lib/docker/containers/cd5f654e1442ac057e907032537255f809576f7c8b28538eef09539128c3ffab/hosts",
+        "LogPath": "/var/lib/docker/containers/cd5f654e1442ac057e907032537255f809576f7c8b28538eef09539128c3ffab/cd5f654e1442ac057e907032537255f809576f7c8b28538eef09539128c3ffab-json.log",
+        "Name": "/eternalx",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "eternalx-data:/app/data"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "eternal",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "eternalx-data",
+                "Source": "/var/lib/docker/volumes/eternalx-data/_data",
+                "Destination": "/app/data",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "cd5f654e1442",
+            "Domainname": "",
+            "User": "1654",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "8080/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "ASPNETCORE_ENVIRONMENT=Production",
+                "PATH_BASE=/x",
+                "GATEWAY_KEY=e008ede693ad4008892c27bbac80f0b37e773b6e57fd41f09418cf348a184b78",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "APP_UID=1654",
+                "ASPNETCORE_HTTP_PORTS=8080",
+                "DOTNET_RUNNING_IN_CONTAINER=true",
+                "DOTNET_VERSION=10.0.9",
+                "ASPNET_VERSION=10.0.9",
+                "ASPNETCORE_URLS=http://+:8080",
+                "LITEDB_PATH=/app/data/eternalx.db"
+            ],
+            "Cmd": null,
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "curl -f http://localhost:8080/health || exit 1"
+                ],
+                "Interval": 30000000000,
+                "Timeout": 3000000000,
+                "StartPeriod": 20000000000,
+                "Retries": 3
+            },
+            "Image": "eternalx:latest",
+            "Volumes": {
+                "/app/data": {}
+            },
+            "WorkingDir": "/app",
+            "Entrypoint": [
+                "dotnet",
+                "EternalX.Blazor.Server.dll"
+            ],
+            "Labels": {
+                "org.opencontainers.image.version": "24.04"
+            },
+            "StopTimeout": 1
+        },
+        "NetworkSettings": {
+            "SandboxID": "",
+            "SandboxKey": "",
+            "Ports": {},
+            "Networks": {
+                "eternal": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "4601a6bd51ebfd987dc3a955840d72bfe7df8e3e6890a9b2f8e8fe700035b3e0",
+                    "EndpointID": "",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "MacAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "eternalx",
+                        "cd5f654e1442"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:51bbcb0ac6c7ad0c1c11f4673fe9800febb6da9780a16b06b45c1ec8ae6f1eda",
+            "size": 2197,
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]

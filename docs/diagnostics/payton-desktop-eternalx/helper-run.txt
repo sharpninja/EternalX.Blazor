@@ -1,0 +1,12 @@
+docker : Unable to find image 'alpine:latest' locally
+At line:23 char:3
++   docker run -d --name $helper -v eternalx-data:/data alpine sleep 12 ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Unable to find ...latest' locally:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+docker: error getting credentials - err: exit status 1, out: `A specified logon session does not exist. It may already 
+have been terminated.`
+
+Run 'docker run --help' for more information
+
