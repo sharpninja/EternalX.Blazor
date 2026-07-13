@@ -7,6 +7,14 @@ public class AiService
 {
     public const string AiHttpClientName = "eternalx-ai";
 
+    public static readonly string[] KnownProviderNames =
+    [
+        "claude",
+        "openai",
+        "grok",
+        "huggingface"
+    ];
+
     private readonly IReadOnlyList<IAiProvider> _providers;
     private readonly IAiProvider _stub;
     private readonly IConfiguration _config;
@@ -58,11 +66,21 @@ public class AiService
         new HuggingFaceAiProvider(config, http, logger)
     ];
 
-    /// <summary>Live (configured) provider names only; empty when all missing keys.</summary>
-    public IReadOnlyList<string> LiveProviderNames()
+    /// <summary>Providers that have API keys configured (regardless of admin enable toggle).</summary>
+    public IReadOnlyList<string> KeyedProviderNames()
         => _providers.Where(p => p.IsConfigured).Select(p => p.Name).ToList();
 
-    /// <summary>Names shown to clients: live providers or stub fallback.</summary>
+    /// <summary>Live providers: have keys AND not disabled in FeedSettings.</summary>
+    public IReadOnlyList<string> LiveProviderNames()
+    {
+        var settings = _db.GetSettings();
+        return _providers
+            .Where(p => p.IsConfigured && settings.IsProviderEnabled(p.Name))
+            .Select(p => p.Name)
+            .ToList();
+    }
+
+    /// <summary>Names shown to clients: enabled live providers or stub fallback.</summary>
     public IReadOnlyList<string> ConfiguredProviderNames()
     {
         var live = LiveProviderNames();
@@ -70,6 +88,18 @@ public class AiService
     }
 
     public bool HasLiveProviders => LiveProviderNames().Count > 0;
+
+    /// <summary>Admin inventory: key presence + enable flag without exposing secrets.</summary>
+    public IReadOnlyList<AiAgentStatus> GetAgentStatuses()
+    {
+        var settings = _db.GetSettings();
+        return _providers.Select(p => new AiAgentStatus(
+            Name: p.Name,
+            HasApiKey: p.IsConfigured,
+            Enabled: settings.IsProviderEnabled(p.Name),
+            Active: p.IsConfigured && settings.IsProviderEnabled(p.Name)
+        )).ToList();
+    }
 
     public async Task<AiResult> GenerateForFigureAsync(
         Figure figure,
@@ -83,7 +113,7 @@ public class AiService
             ?? _config["DEFAULT_AI_PROVIDER"]
             ?? "grok";
 
-        var provider = ResolveProvider(providerName, rotate: false);
+        var provider = ResolveProvider(providerName, rotate: false, settings);
         settings.ProviderModels.TryGetValue(provider.Name, out var model);
         settings.ProviderEfforts.TryGetValue(provider.Name, out var effort);
 
@@ -146,7 +176,8 @@ public class AiService
         string userPrompt,
         CancellationToken cancellationToken = default)
     {
-        var provider = ResolveProvider(null, rotate: true);
+        var settings = _db.GetSettings();
+        var provider = ResolveProvider(null, rotate: true, settings);
         return await GenerateForFigureAsync(figure, userPrompt, provider.Name, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -163,35 +194,42 @@ public class AiService
         return null;
     }
 
-    private IAiProvider ResolveProvider(string? preferredName, bool rotate)
+    private IAiProvider ResolveProvider(string? preferredName, bool rotate, FeedSettings settings)
     {
-        var configured = _providers.Where(p => p.IsConfigured).ToList();
-        if (configured.Count == 0)
+        // Only providers with keys AND not admin-disabled.
+        var usable = _providers
+            .Where(p => p.IsConfigured && settings.IsProviderEnabled(p.Name))
+            .ToList();
+
+        if (usable.Count == 0)
             return _stub;
 
         if (!string.IsNullOrWhiteSpace(preferredName))
         {
-            var match = configured.FirstOrDefault(p =>
+            var match = usable.FirstOrDefault(p =>
                 string.Equals(p.Name, preferredName, StringComparison.OrdinalIgnoreCase));
             if (match is not null)
                 return match;
+            // Preferred is missing/disabled: fall through to default among usable.
         }
 
         if (rotate)
         {
             var idx = Interlocked.Increment(ref _roundRobin);
-            return configured[Math.Abs(idx) % configured.Count];
+            return usable[Math.Abs(idx) % usable.Count];
         }
 
-        var def = _config["DEFAULT_AI_PROVIDER"];
+        var def = settings.DefaultAiProvider ?? _config["DEFAULT_AI_PROVIDER"];
         if (!string.IsNullOrWhiteSpace(def))
         {
-            var preferred = configured.FirstOrDefault(p =>
+            var preferred = usable.FirstOrDefault(p =>
                 string.Equals(p.Name, def, StringComparison.OrdinalIgnoreCase));
             if (preferred is not null)
                 return preferred;
         }
 
-        return configured[0];
+        return usable[0];
     }
 }
+
+public sealed record AiAgentStatus(string Name, bool HasApiKey, bool Enabled, bool Active);

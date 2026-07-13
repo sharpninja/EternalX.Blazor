@@ -67,7 +67,7 @@ public static class PostEndpoints
             });
         });
 
-        app.MapGet("/api/ai/status", (LiteDbService db, AiService ai) =>
+        app.MapGet("/api/ai/status", (LiteDbService db, AiService ai, IConfiguration config) =>
         {
             var settings = db.GetSettings();
             var live = ai.LiveProviderNames();
@@ -76,9 +76,12 @@ public static class PostEndpoints
                 paused = settings.AutoReplyPaused,
                 providers = ai.ConfiguredProviderNames(),
                 liveProviders = live,
+                keyedProviders = ai.KeyedProviderNames(),
+                disabledProviders = settings.DisabledProviders,
                 live = live.Count > 0,
                 usingStub = live.Count == 0,
                 defaultProvider = settings.DefaultAiProvider
+                                  ?? config["DEFAULT_AI_PROVIDER"]
                                   ?? "grok",
                 figureCount = db.GetFigures(enabledOnly: true).Count,
                 postCount = db.CountPosts(),

@@ -37,6 +37,18 @@ public sealed class FeedApiClient
     public Task<AdminStatsDto?> GetAdminStatsAsync()
         => _http.GetFromJsonAsync<AdminStatsDto>("api/admin/stats");
 
+    public Task<AdminAgentsDto?> GetAdminAgentsAsync()
+        => _http.GetFromJsonAsync<AdminAgentsDto>("api/admin/agents");
+
+    public Task<HttpResponseMessage> EnableAgentAsync(string name)
+        => _http.PostAsync($"api/admin/agents/{Uri.EscapeDataString(name)}/enable", null);
+
+    public Task<HttpResponseMessage> DisableAgentAsync(string name)
+        => _http.PostAsync($"api/admin/agents/{Uri.EscapeDataString(name)}/disable", null);
+
+    public Task<HttpResponseMessage> SetDefaultAgentAsync(string name)
+        => _http.PostAsJsonAsync("api/admin/agents/default", new { Name = name });
+
     public Task<HttpResponseMessage> PauseAutoReplyAsync()
         => _http.PostAsync("api/admin/auto-reply/pause", null);
 
@@ -86,3 +98,13 @@ public sealed record AdminStatsDto(
     int FigureCount,
     int EnabledFigures,
     bool AutoReplyPaused);
+
+public sealed record AdminAgentsDto(
+    string? DefaultProvider,
+    List<AgentDto>? Agents);
+
+public sealed record AgentDto(
+    string Name,
+    bool HasApiKey,
+    bool Enabled,
+    bool Active);

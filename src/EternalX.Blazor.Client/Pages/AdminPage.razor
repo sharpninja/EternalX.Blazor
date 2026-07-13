@@ -15,7 +15,8 @@
     else
     {
         <h2 class="admin-h">Admin</h2>
-        <p class="hint">Owner tools for EternalX feed and roster.</p>
+        <p class="hint">Owner tools for EternalX feed, AI agents, and roster.</p>
+
         @if (_stats is not null)
         {
             <ul class="stats">
@@ -25,13 +26,89 @@
                 <li>Auto-reply: @(_stats.AutoReplyPaused ? "paused" : "running")</li>
             </ul>
         }
-        <div class="admin-actions">
-            <button class="pill" @onclick="Pause">Pause auto-reply</button>
-            <button class="pill" @onclick="Resume">Resume auto-reply</button>
-            <button class="pill" @onclick="Seed">Re-seed roster</button>
-            <button class="pill" @onclick="Export">Export JSON</button>
-            <button class="pill danger" @onclick="ClearFeed">Clear feed</button>
-        </div>
+
+        <section class="admin-section">
+            <h3 class="admin-sub">AI agents</h3>
+            <p class="hint">
+                Disable an agent to stop using it without removing its API key from Octopus.
+                Keys stay in the environment; only selection is toggled.
+            </p>
+            @if (_agents is null)
+            {
+                <p class="hint">Loading agents...</p>
+            }
+            else if (_agents.Count == 0)
+            {
+                <p class="hint">No providers registered.</p>
+            }
+            else
+            {
+                <p class="hint">Default provider: <strong>@_defaultProvider</strong></p>
+                <ul class="agent-list">
+                    @foreach (var agent in _agents)
+                    {
+                        <li class="agent-row">
+                            <div class="agent-meta">
+                                <span class="agent-name">@agent.Name</span>
+                                <span class="agent-flags">
+                                    @if (agent.HasApiKey)
+                                    {
+                                        <span class="agent-pill key">key</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="agent-pill nokey">no key</span>
+                                    }
+                                    @if (agent.Active)
+                                    {
+                                        <span class="agent-pill active">active</span>
+                                    }
+                                    else if (agent.Enabled)
+                                    {
+                                        <span class="agent-pill idle">enabled</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="agent-pill off">disabled</span>
+                                    }
+                                    @if (string.Equals(agent.Name, _defaultProvider, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <span class="agent-pill def">default</span>
+                                    }
+                                </span>
+                            </div>
+                            <div class="agent-actions">
+                                @if (agent.Enabled)
+                                {
+                                    <button class="pill" @onclick="() => DisableAgent(agent.Name)" disabled="@_busy">Disable</button>
+                                }
+                                else
+                                {
+                                    <button class="pill primary" @onclick="() => EnableAgent(agent.Name)" disabled="@(_busy || !agent.HasApiKey)" title="@(agent.HasApiKey ? "" : "No API key in environment")">
+                                        Enable
+                                    </button>
+                                }
+                                <button class="pill" @onclick="() => SetDefault(agent.Name)" disabled="@(_busy || !agent.HasApiKey)">
+                                    Set default
+                                </button>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section class="admin-section">
+            <h3 class="admin-sub">Feed controls</h3>
+            <div class="admin-actions">
+                <button class="pill" @onclick="Pause">Pause auto-reply</button>
+                <button class="pill" @onclick="Resume">Resume auto-reply</button>
+                <button class="pill" @onclick="Seed">Re-seed roster</button>
+                <button class="pill" @onclick="Export">Export JSON</button>
+                <button class="pill danger" @onclick="ClearFeed">Clear feed</button>
+            </div>
+        </section>
+
         <p class="status">@_status</p>
     }
 </main>
@@ -39,19 +116,66 @@
 @code {
     private MeDto? _me;
     private AdminStatsDto? _stats;
+    private List<AgentDto> _agents = new();
+    private string _defaultProvider = "grok";
     private string _status = "";
+    private bool _busy;
 
     protected override async Task OnInitializedAsync()
     {
         try { _me = await Api.GetMeAsync(); } catch { _me = new MeDto(false, null, null, null, false, false, true); }
         if (_me is { IsAdmin: true })
+        {
             await RefreshStats();
+            await RefreshAgents();
+        }
     }
 
     private async Task RefreshStats()
     {
         try { _stats = await Api.GetAdminStatsAsync(); }
         catch { _status = "Could not load stats."; }
+    }
+
+    private async Task RefreshAgents()
+    {
+        try
+        {
+            var pack = await Api.GetAdminAgentsAsync();
+            if (pack is not null)
+            {
+                _agents = pack.Agents ?? new();
+                _defaultProvider = pack.DefaultProvider ?? "grok";
+            }
+        }
+        catch { _status = "Could not load agents."; }
+    }
+
+    private async Task EnableAgent(string name)
+    {
+        _busy = true;
+        var r = await Api.EnableAgentAsync(name);
+        _status = r.IsSuccessStatusCode ? $"Enabled {name}." : $"Failed to enable {name}.";
+        await RefreshAgents();
+        _busy = false;
+    }
+
+    private async Task DisableAgent(string name)
+    {
+        _busy = true;
+        var r = await Api.DisableAgentAsync(name);
+        _status = r.IsSuccessStatusCode ? $"Disabled {name} (API key kept)." : $"Failed to disable {name}.";
+        await RefreshAgents();
+        _busy = false;
+    }
+
+    private async Task SetDefault(string name)
+    {
+        _busy = true;
+        var r = await Api.SetDefaultAgentAsync(name);
+        _status = r.IsSuccessStatusCode ? $"Default provider set to {name}." : $"Failed to set default {name}.";
+        await RefreshAgents();
+        _busy = false;
     }
 
     private async Task Pause()

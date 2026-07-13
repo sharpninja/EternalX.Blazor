@@ -27,6 +27,77 @@ public static class AdminEndpoints
             });
         });
 
+        // AI agents (providers): enable/disable without removing Octopus API keys.
+        group.MapGet("/agents", (HttpContext http, AiService ai, LiteDbService db, IConfiguration config) =>
+        {
+            if (!IsOwner(http, config)) return Results.Forbid();
+            var settings = db.GetSettings();
+            return Results.Ok(new
+            {
+                defaultProvider = settings.DefaultAiProvider
+                                  ?? config["DEFAULT_AI_PROVIDER"]
+                                  ?? "grok",
+                agents = ai.GetAgentStatuses()
+            });
+        });
+
+        group.MapPost("/agents/{name}/enable", async (
+            HttpContext http,
+            string name,
+            LiteDbService db,
+            IConfiguration config,
+            IFeedNotifier notifier) =>
+        {
+            if (!IsOwner(http, config)) return Results.Forbid();
+            if (!IsKnownAgent(name))
+                return Results.BadRequest($"Unknown agent '{name}'. Known: {string.Join(", ", AiService.KnownProviderNames)}");
+
+            var settings = db.GetSettings();
+            settings.SetProviderEnabled(name, enabled: true);
+            db.SaveSettings(settings);
+            await notifier.NotifyAsync(FeedEvents.KindSettings).ConfigureAwait(false);
+            return Results.Ok(new { name = name.ToLowerInvariant(), enabled = true });
+        });
+
+        group.MapPost("/agents/{name}/disable", async (
+            HttpContext http,
+            string name,
+            LiteDbService db,
+            IConfiguration config,
+            IFeedNotifier notifier) =>
+        {
+            if (!IsOwner(http, config)) return Results.Forbid();
+            if (!IsKnownAgent(name))
+                return Results.BadRequest($"Unknown agent '{name}'. Known: {string.Join(", ", AiService.KnownProviderNames)}");
+
+            var settings = db.GetSettings();
+            settings.SetProviderEnabled(name, enabled: false);
+            db.SaveSettings(settings);
+            await notifier.NotifyAsync(FeedEvents.KindSettings).ConfigureAwait(false);
+            return Results.Ok(new { name = name.ToLowerInvariant(), enabled = false });
+        });
+
+        group.MapPost("/agents/default", async (
+            HttpContext http,
+            SetDefaultAgentBody body,
+            LiteDbService db,
+            IConfiguration config,
+            IFeedNotifier notifier) =>
+        {
+            if (!IsOwner(http, config)) return Results.Forbid();
+            if (body?.Name is null || !IsKnownAgent(body.Name))
+                return Results.BadRequest("Provide a known agent name.");
+
+            var settings = db.GetSettings();
+            settings.DefaultAiProvider = body.Name.Trim().ToLowerInvariant();
+            // Default implies enabled so generation can use it.
+            settings.SetProviderEnabled(settings.DefaultAiProvider, enabled: true);
+            db.SaveSettings(settings);
+            await notifier.NotifyAsync(FeedEvents.KindSettings).ConfigureAwait(false);
+            return Results.Ok(new { defaultProvider = settings.DefaultAiProvider });
+        });
+
+
         group.MapPost("/auto-reply/pause", async (HttpContext http, LiteDbService db, IConfiguration config, IFeedNotifier notifier) =>
         {
             if (!IsOwner(http, config)) return Results.Forbid();
@@ -110,6 +181,13 @@ public static class AdminEndpoints
 
         return app;
     }
+
+    public sealed record SetDefaultAgentBody(string Name);
+
+    private static bool IsKnownAgent(string? name) =>
+        !string.IsNullOrWhiteSpace(name) &&
+        AiService.KnownProviderNames.Any(k =>
+            string.Equals(k, name.Trim(), StringComparison.OrdinalIgnoreCase));
 
     private static bool IsOwner(HttpContext http, IConfiguration config)
     {
