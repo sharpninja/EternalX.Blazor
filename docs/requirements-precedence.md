@@ -54,8 +54,7 @@ Shared-core requirements from sibling docs typically apply here. UI-specific sib
 
 These examples clarify the rule; they are not an exhaustive conflict matrix.
 
-- **Shared / likely in force from siblings:** Eternal network gateway SSO contract (`docs/gateway-sso.md` on EternalReddit) when operating behind the EternalSocial gateway (`X-Gateway-Key`, `X-Auth-*`, path base, forwarded headers). Implement the *contract* here; do not copy sibling handler code from `src/`.
-- **Local override (documented conflict):** `docs/REQUIREMENTS.md` §2.1 currently specifies server-side OIDC with Google, Microsoft, and GitHub. That conflicts with the gateway-only auth model. **Local REQUIREMENTS.md wins** for this product until this repo’s requirements are deliberately changed to gateway-first. If both modes are needed, local requirements must be updated to state dual-mode rules explicitly before implementation treats gateway as mandatory.
+- **Shared / in force:** Eternal network gateway SSO contract (`docs/gateway-sso.md` on EternalReddit): `X-Gateway-Key` + `X-Auth-*`, path base, forwarded headers. **No local OIDC** on EternalX; identity only from the proxy. Implement the contract here; do not copy sibling handler code from `src/`.
 
 ## Process obligations (BDP v4)
 

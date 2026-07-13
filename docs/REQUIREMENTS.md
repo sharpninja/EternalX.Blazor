@@ -27,13 +27,10 @@ The application allows anonymous reading but requires authentication to post or 
 
 ### 2.1 Authentication & Authorization
 - Users can browse and read all content **anonymously**.
-- Users **must log in** to create posts or generate AI replies.
-- Supported OpenID Connect providers:
-  - Google
-  - Microsoft (Entra ID / Azure AD)
-  - GitHub
-- Login is handled via standard OIDC flow on the server.
-- Session is maintained for posting, voting, and sharing.
+- Users **must be authenticated** to create posts or generate AI replies.
+- **No local OIDC** (no Google/Microsoft/GitHub client on EternalX).
+- Authentication is **EternalSocial gateway only**: the proxy supplies `X-Gateway-Key` (shared secret `GATEWAY_KEY`) and, when signed in, `X-Auth-UserId` / `X-Auth-Name` / `X-Auth-Email`. Headers without a matching key are ignored (anonymous).
+- Login/logout links target the gateway (`/login`, `/logout`), not this site.
 - No local user accounts or passwords.
 
 ### 2.2 Posting & Content Creation

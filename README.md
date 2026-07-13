@@ -6,7 +6,7 @@ A full-featured Blazor WebAssembly Hosted application running in Docker.
 
 ## Features
 - Anonymous reading of the Eternal Feed
-- Login with Google, Microsoft, or GitHub (OpenID Connect)
+- Authentication via EternalSocial gateway only (`GATEWAY_KEY` + `X-Auth-*`; no local OIDC)
 - Real AI replies from Claude, OpenAI, Grok, or Hugging Face (keys via environment variables)
 - Moderator AI that blocks NSFW content and prompt injection attempts
 - Automatic ban on prompt injection
@@ -17,7 +17,7 @@ A full-featured Blazor WebAssembly Hosted application running in Docker.
 
 ## Running with Docker
 
-1. Copy `.env.example` to `.env` and fill in your API keys, OAuth credentials, and optional NGROK_AUTHTOKEN.
+1. Copy `.env.example` to `.env` and fill in AI keys, required `GATEWAY_KEY` (shared with the proxy), and optional `NGROK_AUTHTOKEN`.
 2. Run:
    ```bash
    docker-compose up --build
@@ -31,11 +31,11 @@ ngrok is included as a sidecar service. It provides a public HTTPS URL for your 
 - Get your free authtoken at https://dashboard.ngrok.com
 - Add it to `.env` as `NGROK_AUTHTOKEN`
 - After `docker-compose up`, visit http://localhost:4040 to see the public URL (e.g. `https://xxxx.ngrok.io`)
-- Use that public URL as the base for your OAuth redirect URIs in Google/Microsoft/GitHub developer consoles.
+- OAuth redirect URIs belong on the **gateway**, not this site.
 
 ## Important Notes
 - You (the developer) supply the AI API keys in the `.env` file.
-- Users authenticate via their chosen OpenID provider to post.
+- Users authenticate via the EternalSocial proxy; EternalX never runs local OIDC.
 - The Moderator runs on every new post.
 - The Auto-Reply service runs continuously in the background.
 
@@ -44,6 +44,7 @@ ngrok is included as a sidecar service. It provides a public HTTPS URL for your 
 - **Process (mandatory):** all work must follow [Byrd Development Process v4](docs/byrd-development-process.md) (canonical source: McpServer `docs/Development-Process-draft-v4.md`)
 - **Requirements precedence:** sibling `docs/` requirements apply unless they conflict with this repo; local wins ([`docs/requirements-precedence.md`](docs/requirements-precedence.md))
 - Product architecture (shared core / divergent UI): [`docs/product-architecture.md`](docs/product-architecture.md)
+- Requirement groups (UI / AI / Core): [docs/Project/requirement-groups.md](docs/Project/requirement-groups.md)
 - Product requirements: [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md)
 - Octopus Deploy configuration: [`docs/deploy/octopus.md`](docs/deploy/octopus.md)
 

@@ -1,123 +1,183 @@
 # Functional Requirements (MCP Server)
 
-## FR-AI-001 Deep reply thread on user post
+## FR-AI-001 Per-provider model and effort selection
 
-When a user posts, the system must automatically generate a deep reply thread of 5 to 7 replies from a rotating set of historical, legendary, or mythical figures.
+Admins or operator config set AI model and reasoning effort per provider for the EternalX feed via configuration or admin surface populated from live provider catalogs, with fallback to provider env defaults. Reply metadata displays provider and model.
 Scope: layer-1+
 
-## FR-AI-002 Multi-provider server-side AI
+## FR-AI-002 AI feed control
 
-The system must support AI providers Hugging Face, Anthropic Claude (default), OpenAI, and xAI Grok using operator-supplied credentials via environment variables. All AI calls must be server-side only; API keys must never be sent to the client.
+Operators can pause and resume auto-reply and auto-post background services, seed content on demand, and view stats. Auto-replies respect quiet gap and must not unbounded-loop. If feed idle about 1 hour, a figure may create an original post.
 Scope: layer-1+
 
-## FR-AI-003 In-character crossovers
+## FR-AI-003 User post submission with AI replies
 
-AI replies must stay in character for the assigned figure and produce unlikely but on-point crossovers between figures.
+Authenticated users submit posts (text required; title optional for X). AI figures reply in-character on a realistic cadence. Providers may round-robin (Claude, Grok, OpenAI, HuggingFace). Deep initial threads bounded (target 5-7).
 Scope: layer-1+
 
-## FR-ARCH-001 Shared core semantics unique implementation
+## FR-AI-004 Content boundaries and roster curation
 
-The EternalX product must implement shared Eternal network core data and AI interaction semantics while remaining a unique implementation owned by GrokCode in this repository. Sibling requirements inform behavior; sibling src and tests must not be used as implementation sources.
+Figures whose primary legacy is inseparable from atrocity or oppression are excluded. Satire affectionate and hypothetical. Replies only from approved roster. Scripted gags if any are documented exceptions.
 Scope: layer-1+
 
-## FR-AUTH-001 Anonymous browse
+## FR-AI-005 Curated historical cast
 
-Users must be able to browse and read all public feed content anonymously without signing in.
+Curated roster of historical, legendary, and mythical figures with name and rich persona. Membership data-driven.
 Scope: layer-1+
 
-## FR-AUTH-002 Authenticated write and engage
+## FR-AI-006 In-character generation
 
-Users must be authenticated to create posts, vote, share, or trigger AI reply generation.
+Server assigns figure and persona; models never choose identity. In-character replies, biographical humor, playful tone, peer crossovers.
 Scope: layer-1+
 
-## FR-AUTH-003 Standalone multi-provider OIDC
+## FR-AI-007 Peer-group membership for figure picks
 
-When not operating exclusively behind gateway-enforced SSO, EternalX must support server-side OpenID Connect login with Google, Microsoft (Entra ID), and GitHub. No local username/password accounts. Session must support posting, voting, and sharing. Local REQUIREMENTS override sibling gateway-only OAuth prohibition for standalone mode.
+Peer groups organize the cast; multi-membership allowed. AI picks from allowed groups with fallback so feed never dead-ends.
 Scope: layer-1+
 
-## FR-AUTH-004 Optional EternalSocial gateway identity
+## FR-AI-008 Figure lifecycle
 
-When GATEWAY_KEY is configured, EternalX must accept identity only when request X-Gateway-Key matches, building principal from X-Auth-UserId, X-Auth-Name, and X-Auth-Email. Mismatched or missing key yields anonymous. Login/logout in gateway deployments target gateway /login and /logout. Path base and forwarded headers must work behind the gateway.
+Roster presence means approved; unapproved names purged. Enabled flag benches picks without deleting history. Operators manage figures and groups.
 Scope: layer-1+
 
-## FR-BG-001 Background auto-reply service
+## FR-AI-009 Scripted gag exception optional
 
-A background service on a 10-second timer must scan recently active threads quiet for a few minutes, select interesting AI context, and post one new in-character AI reply, respecting rate limits and moderation including moderating background replies.
+Optional scripted non-model gags if enabled must be documented exceptions exempt from model generation and unapproved purge.
 Scope: layer-1+
 
-## FR-DATA-001 LiteDB persistence
+## FR-AI-010 Moderate all content
 
-All application data must persist in LiteDB with collections for posts with embedded replies, users, votes, moderation logs, and rate-limit counters. The database file must survive container restarts via volume mount at /app/data.
+Every user post and AI reply passes moderation before acceptance (NSFW/hate and prompt-injection).
 Scope: layer-1+
 
-## FR-DEPLOY-001 Docker runtime
+## FR-AI-011 Prompt injection ban
 
-EternalX must ship as a multi-stage Docker image listening on 8080, non-root, healthcheck on /health, with volume for /app/data. Local docker-compose must include the app and optional ngrok sidecar with .env secrets.
+Injection blocks content, auto-bans user (IP and id), rejects future posts.
 Scope: layer-1+
 
-## FR-DEPLOY-002 Octopus project EternalX
+## FR-AI-012 NSFW block without ban
 
-Deployment must support Octopus project EternalX with Deploy Docker Container step, Sensitive variables for AI and OAuth secrets, DEFAULT_AI_PROVIDER, LITEDB_PATH, environment scopes Development/Staging/Production, and persistent volume for LiteDB.
+NSFW/hate blocked without ban unless injection also present; decisions logged.
 Scope: layer-1+
 
-## FR-DEPLOY-003 Independent per-repo deploy trigger
+## FR-AI-013 Background auto-reply bounds
 
-EternalX must deploy independently via Octopus Git trigger on this repo push to main without requiring a shared multi-repo pipeline.
+Background auto-reply enforces max replies per post, min quiet period, max replies per tick, and max context chars to prevent unbounded growth.
 Scope: layer-1+
 
-## FR-MOD-001 Moderate all content
+## FR-CORE-001 Timeline feed
 
-Every new user post and every AI-generated reply must pass through Moderator AI before acceptance.
+EternalX presents a chronological or ranking-capable timeline of posts and threaded replies (X-style). Reddit multi-sub communities are out of scope for this product UI.
 Scope: layer-1+
 
-## FR-MOD-002 Prompt injection ban
+## FR-CORE-002 Peer groups for figures
 
-If prompt injection is detected, the content must be blocked, the user must be auto-banned (IP and user ID recorded), and future posts from that user must be rejected.
+Figures belong to zero or more peer groups for AI casting. Empty allowlist means open to all approved enabled figures with fallback.
 Scope: layer-1+
 
-## FR-MOD-003 NSFW block without ban
+## FR-CORE-003 Authenticated human posts and replies
 
-NSFW, adult, violent, or hateful content must be blocked without banning the user unless prompt injection is also present. Moderator decisions must be logged.
+Authenticated users post and reply. Humans have identity, no AI provider badge, survive restarts (purge-exempt).
 Scope: layer-1+
 
-## FR-NET-001 Path base behind gateway
+## FR-CORE-004 Owner-gated admin surface
 
-When deployed under the EternalSocial gateway path prefix /x, EternalX must absorb PATH_BASE / Proxy:PathBase with matching document base href and trust X-Forwarded-Proto/Host from the gateway.
+Admin UI and APIs restricted to owner account (Authorization__AdminEmail). Server-side enforcement.
 Scope: layer-1+
 
-## FR-OPS-001 Health and observability
+## FR-CORE-005 Admin data tools
 
-The app must expose /health returning 200 when app and database are healthy. Structured logging must cover post creation, AI calls, moderation decisions, bans, and background replies. Moderation decisions must be queryable for audit.
+Admin provides export, restore, and clear-feed (or equivalent) for EternalX data.
 Scope: layer-1+
 
-## FR-POST-001 Create text posts
+## FR-CORE-006 No lost updates under concurrency
 
-Authenticated users must be able to submit new text posts with optional title or topic; posts persist immediately.
+Concurrent user and background writes must not drop posts or reply threads.
 Scope: layer-1+
 
-## FR-POST-002 Chronological feed
+## FR-CORE-007 Voting
 
-Posts must appear in a chronological feed newest first.
+Authenticated users at most one vote per post/reply. Scores displayed and persisted. Anonymous read-only scores.
 Scope: layer-1+
 
-## FR-POST-003 IP post rate limit
+## FR-CORE-008 Share deep links
 
-The server must enforce a maximum of one new post per minute per IP address for all users including authenticated users.
+Authenticated users share post/reply via clean deep link; share counts optional.
 Scope: layer-1+
 
-## FR-SEC-001 Secrets and HTTPS
+## FR-CORE-009 Gateway estate participation
 
-AI credentials and OAuth secrets must come only from environment variables (Sensitive in Octopus). No client-side AI calls. Production must use HTTPS; local dev may use ngrok for HTTPS and OAuth callbacks.
+EternalX participates at /x on eternal docker network. Operates correctly as proxied site; gateway admin owned by gateway product.
 Scope: layer-1+
 
-## FR-SOC-001 Upvote and downvote
+## FR-CORE-010 Gateway proxy authentication only
 
-Authenticated users must be able to upvote (+1) and downvote (-1) posts and replies; counts must be displayed and persisted. Anonymous users may view counts but not vote.
+EternalX must not run local OIDC. Authenticate solely via EternalSocial proxy: require GATEWAY_KEY; accept identity only when X-Gateway-Key matches and X-Auth-UserId is present (plus optional Name/Email). Missing or mismatched key yields anonymous. Login/logout at gateway /login and /logout.
 Scope: layer-1+
 
-## FR-SOC-002 Share deep links
+## FR-CORE-011 Persistent sign-in
 
-Authenticated users must be able to share a post or specific reply via a clean shareable link that opens directly to that item; share counts must be displayed and persisted.
+Logged-in sessions are established by the gateway cookie; EternalX relies on per-request X-Auth-* headers from the proxy for authenticated API calls within the estate.
+Scope: layer-1+
+
+## FR-CORE-012 Per-repo deploy triggers
+
+EternalX deploys independently via Octopus Git trigger on this repo main; no shared multi-repo pipeline required.
+Scope: layer-1+
+
+## FR-CORE-013 Stable shared GATEWAY_KEY
+
+GATEWAY_KEY stable sensitive library variable so EternalX can restart independently without breaking SSO.
+Scope: layer-1+
+
+## FR-CORE-014 Data-driven content and config
+
+Posts/replies, figures, peer groups, users, votes, moderation logs, settings in LiteDB. Prefer data-driven roster/settings.
+Scope: layer-1+
+
+## FR-CORE-015 Durable volume persistence
+
+Durable content under /app/data on named volume eternalx-data via LITEDB_PATH.
+Scope: layer-1+
+
+## FR-CORE-016 Idempotent seeding
+
+First run seeds default figures and peer groups. Re-seed insert-if-absent; no clobber of operator edits. No Reddit 12-community seed required.
+Scope: layer-1+
+
+## FR-CORE-017 Versioned export and restore
+
+Admin export versioned JSON snapshot; restore rejects unsupported versions; clear-feed preserves roster/config when present.
+Scope: layer-1+
+
+## FR-CORE-018 Unique implementation ownership
+
+GrokCode owns EternalX design/code/tests/validation. Shared requirements do not authorize sibling src/tests reuse.
+Scope: layer-1+
+
+## FR-CORE-019 IP post rate limit
+
+Maximum one new post per minute per IP, server-side before side effects.
+Scope: layer-1+
+
+## FR-CORE-020 Health and observability
+
+/health 200 when app and DB healthy. Structured logs for posts, AI, moderation, bans, background replies.
+Scope: layer-1+
+
+## FR-CORE-021 Docker runtime
+
+Multi-stage image port 8080, non-root, healthcheck, /app/data volume; compose may include ngrok for standalone OAuth testing.
+Scope: layer-1+
+
+## FR-CORE-022 Path base and forwarded headers
+
+PATH_BASE=/x with UsePathBase and base href; trust gateway X-Forwarded-Proto/Host.
+Scope: layer-1+
+
+## FR-CORE-023 Secrets from environment only
+
+AI credentials and GATEWAY_KEY come only from environment variables (Sensitive in Octopus). No site OIDC client secrets. No client-side AI keys.
 Scope: layer-1+
 
 ## FR-UI-001 Twitter X style user interface

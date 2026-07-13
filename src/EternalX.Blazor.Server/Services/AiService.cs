@@ -11,10 +11,12 @@ public class AiService
         _httpClient = httpClient;
     }
 
-    public async Task<string> GenerateReplyAsync(string prompt, string provider = "claude")
+    public Task<string> GenerateReplyAsync(string prompt, string provider = "claude")
     {
-        // TODO: Implement actual calls to Claude, OpenAI, Grok, Hugging Face using keys from _config
-        // For now returns a placeholder that the Moderator will process
-        return $"[{provider.ToUpper()}] Historical figure response to: {prompt}";
+        // TODO: Implement actual calls to Claude, OpenAI, Grok, Hugging Face using keys from _config.
+        // Do not echo the full prompt: that amplified unbounded auto-reply growth in production.
+        _ = prompt;
+        var label = string.IsNullOrWhiteSpace(provider) ? "claude" : provider.Trim();
+        return Task.FromResult($"[{label.ToUpperInvariant()}] Historical figure reply.");
     }
 }

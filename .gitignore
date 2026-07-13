@@ -10,3 +10,9 @@ cache/
 .env
 mcp.db
 
+
+# Local ops dumps (container pulls)
+docs/diagnostics/**/volume/
+docs/diagnostics/**/db-export/
+docs/diagnostics/**/*-logs-full.txt
+docs/diagnostics/**/*.db

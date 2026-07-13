@@ -2,7 +2,6 @@ using EternalX.Blazor.Server.Api;
 using EternalX.Blazor.Server.Auth;
 using EternalX.Blazor.Server.Data;
 using EternalX.Blazor.Server.Services;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
@@ -21,8 +20,9 @@ builder.Services.AddSingleton<LiteDbService>();
 // AI and Moderator
 builder.Services.AddSingleton<AiService>();
 builder.Services.AddSingleton<ModeratorService>();
+builder.Services.AddSingleton(new AutoReplyOptions());
 
-// Background Auto-Reply Service
+// Background Auto-Reply Service (policy-gated: quiet period + reply cap)
 builder.Services.AddHostedService<AutoReplyBackgroundService>();
 
 // Rate Limiting: 1 post per minute per IP. Scoped to the posting endpoint as the
@@ -49,51 +49,17 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-// Authentication. Behind the EternalSocial gateway (GATEWAY_KEY set) identity
-// arrives as forwarded X-Auth-* headers and the gateway scheme is used; the
-// original OIDC registration below remains for standalone use.
-var gatewayMode = !string.IsNullOrWhiteSpace(builder.Configuration["GATEWAY_KEY"]);
-if (gatewayMode)
+// Authentication: EternalSocial gateway only (no local OIDC). The proxy supplies
+// X-Gateway-Key (shared secret) plus X-Auth-UserId/Name/Email on each request.
+if (string.IsNullOrWhiteSpace(builder.Configuration["GATEWAY_KEY"]))
 {
-    builder.Services.AddAuthentication(GatewayAuthHandler.SchemeName)
-        .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, GatewayAuthHandler>(GatewayAuthHandler.SchemeName, _ => { });
+    throw new InvalidOperationException(
+        "GATEWAY_KEY is required. EternalX authenticates only via the EternalSocial proxy (X-Gateway-Key + X-Auth-* headers).");
 }
-else
-{
 
-// Authentication (OpenID Connect - Google, Microsoft, GitHub)
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = "Cookies";
-    options.DefaultChallengeScheme = "oidc";
-})
-.AddCookie("Cookies")
-.AddOpenIdConnect("Google", options =>
-{
-    options.Authority = "https://accounts.google.com";
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    options.ResponseType = "code";
-    options.Scope.Add("openid");
-    options.Scope.Add("profile");
-    options.Scope.Add("email");
-    options.SaveTokens = true;
-})
-.AddOpenIdConnect("Microsoft", options =>
-{
-    options.Authority = "https://login.microsoftonline.com/common/v2.0";
-    options.ClientId = builder.Configuration["Authentication:Microsoft:ClientId"];
-    options.ClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"];
-    options.ResponseType = "code";
-})
-.AddOpenIdConnect("GitHub", options =>
-{
-    options.Authority = "https://github.com/login/oauth";
-    options.ClientId = builder.Configuration["Authentication:GitHub:ClientId"];
-    options.ClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"];
-});
-
-} // end standalone authentication registration
+builder.Services.AddAuthentication(GatewayAuthHandler.SchemeName)
+    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, GatewayAuthHandler>(
+        GatewayAuthHandler.SchemeName, _ => { });
 
 builder.Services.AddAuthorization();
 
