@@ -1,0 +1,106 @@
+@page "/admin"
+@inject FeedApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Admin - EternalX</PageTitle>
+
+<div class="shell">
+    <header class="topbar">
+        <a class="brand" href="">← Eternal<span class="brand-accent">X</span></a>
+        <span class="tagline">owner tools</span>
+        <span class="spacer"></span>
+    </header>
+
+    <main class="content admin">
+        @if (_me is null)
+        {
+            <p class="hint center">Checking access...</p>
+        }
+        else if (!_me.IsAdmin)
+        {
+            <p class="hint center">Forbidden. Owner only.</p>
+        }
+        else
+        {
+            <h2 class="admin-h">Admin</h2>
+            @if (_stats is not null)
+            {
+                <ul class="stats">
+                    <li>Posts: @_stats.PostCount</li>
+                    <li>Replies: @_stats.ReplyCount</li>
+                    <li>Figures: @_stats.EnabledFigures / @_stats.FigureCount</li>
+                    <li>Auto-reply: @(_stats.AutoReplyPaused ? "paused" : "running")</li>
+                </ul>
+            }
+            <div class="admin-actions">
+                <button class="pill" @onclick="Pause">Pause auto-reply</button>
+                <button class="pill" @onclick="Resume">Resume auto-reply</button>
+                <button class="pill" @onclick="Seed">Re-seed roster</button>
+                <button class="pill" @onclick="Export">Export JSON</button>
+                <button class="pill danger" @onclick="ClearFeed">Clear feed</button>
+            </div>
+            <p class="status">@_status</p>
+        }
+    </main>
+</div>
+
+@code {
+    private MeDto? _me;
+    private AdminStatsDto? _stats;
+    private string _status = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _me = await Api.GetMeAsync(); } catch { _me = new MeDto(false, null, null, null, false, false, true); }
+        if (_me is { IsAdmin: true })
+            await RefreshStats();
+    }
+
+    private async Task RefreshStats()
+    {
+        try { _stats = await Api.GetAdminStatsAsync(); }
+        catch { _status = "Could not load stats."; }
+    }
+
+    private async Task Pause()
+    {
+        var r = await Api.PauseAutoReplyAsync();
+        _status = r.IsSuccessStatusCode ? "Paused." : "Failed.";
+        await RefreshStats();
+    }
+
+    private async Task Resume()
+    {
+        var r = await Api.ResumeAutoReplyAsync();
+        _status = r.IsSuccessStatusCode ? "Resumed." : "Failed.";
+        await RefreshStats();
+    }
+
+    private async Task Seed()
+    {
+        var r = await Api.SeedAsync();
+        _status = r.IsSuccessStatusCode ? "Seed complete." : "Seed failed.";
+        await RefreshStats();
+    }
+
+    private async Task ClearFeed()
+    {
+        var r = await Api.ClearFeedAsync();
+        _status = r.IsSuccessStatusCode ? "Feed cleared (roster kept)." : "Clear failed.";
+        await RefreshStats();
+    }
+
+    private async Task Export()
+    {
+        var r = await Api.ExportAsync();
+        if (!r.IsSuccessStatusCode)
+        {
+            _status = "Export failed.";
+            return;
+        }
+        var bytes = await r.Content.ReadAsByteArrayAsync();
+        // Browser download without JS interop: open as data navigation is limited;
+        // show success with size for operator to use API/curl if needed.
+        _status = $"Export ready ({bytes.Length} bytes). Use GET /api/admin/export to download.";
+    }
+}

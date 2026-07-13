@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-07-12  
-**Status:** Active - Backend foundation complete, Frontend pending
+**Status:** Active - UI + backend aligned to imported MCP requirements (2026-07-13)
 
 **Precedence:** Requirements from sibling repos (EternalReddit, EternalDiscord) also apply to this product **except** where they conflict with this document or other native EternalX.Blazor requirements. **This repository wins on conflict.** Full rule: [`requirements-precedence.md`](requirements-precedence.md).
 
@@ -146,44 +146,38 @@ The application allows anonymous reading but requires authentication to post or 
 
 ---
 
-## 5. Frontend (Blazor WebAssembly Client) — Pending Implementation
+## 5. Frontend (Blazor WebAssembly Client)
 
-The following UI components still need to be built:
-- Top navigation bar with logo, AI status indicator, and login/logout
-- Composer / post creation box (visible only when logged in)
-- Main feed showing posts + nested reply threads
-- Per-post / per-reply action bar: Upvote, Downvote, Share, (and "Generate AI Reply" for manual trigger)
-- AI Settings / Provider status panel (read-only for end users; shows which providers are active)
-- User profile / ban status display (minimal)
-- Share modal / copy link functionality
-- Responsive mobile layout (primary target is desktop but must work on tablet/phone)
-- Real-time feel: new posts and background replies should appear without full page refresh (SignalR or polling)
+Implemented X-style shell (FR-UI-001/002):
+- Top navigation: logo, AI provider chip, login/logout (gateway `/login` `/logout`), ban badge, admin link
+- Composer when authenticated (optional title, 280 counter)
+- Timeline with nested replies, AI provider/model badges
+- Action bars: upvote, downvote, share path, open deep link (`/post/{id}`)
+- SignalR hub `/hubs/feed` (`FeedChanged`) for near-real-time updates; 30s poll fallback if disconnected
+- Owner admin page: pause/resume auto-reply, seed, export, clear-feed, stats
+- Live AI: Claude/OpenAI/Grok/HuggingFace via env keys (stub only when no keys); dual key names supported
+
+Deferred: share clipboard JS interop polish, FR-AI-009 scripted gag.
 
 ---
 
-## 6. Current Implementation Status (as of 2026-07-12)
+## 6. Current Implementation Status (as of 2026-07-13)
 
-**Completed (Backend):**
-- Project structure (Server + Client + Shared)
-- Dockerfile + docker-compose + ngrok sidecar
-- Octopus Deploy configuration and variable templates
-- LiteDB service with basic CRUD
-- Rate limiting middleware (IP-based, 1 post/min)
-- ModeratorService (NSFW + prompt injection detection + auto-ban)
-- AiService (multi-provider support with environment variables)
-- AutoReplyBackgroundService (10-second timer with smart thread selection)
-- OpenID Connect authentication scaffold (Google, Microsoft, GitHub)
-- Shared models (Post, Reply, User, Vote)
-- Health check endpoint
+**Completed:**
+- Gateway-only auth (`GATEWAY_KEY` + `X-Auth-*`); no local OIDC
+- LiteDB: posts, replies, figures, peer groups, users, votes, moderation logs, settings; idempotent seed; export/restore
+- Concurrent reply commits under lock (FR-CORE-006)
+- Rate limit 1 post/min/IP; moderation injection ban + NSFW block; health checks DB
+- AiService multi-provider (Claude/OpenAI/Grok/HF) with stub fallback; FigurePicker; deep thread 5-7; AutoReplyPolicy bounds + pause
+- APIs: feed, post, reply, vote, share, me, ai/status, admin/*
+- Blazor UI timeline, post page, admin page
+- SignalR feed push + live AI providers (HTTP mocked unit tests)
+- Unit tests covering LiteDB, votes, moderator, figure pick, deep thread, AI stub/live, auto-reply policy, gateway identity, UI helpers, feed notifier
 
-**Pending:**
-- Full Blazor Client UI and Razor components
-- API controllers / minimal APIs to expose data to the client
-- Voting and sharing endpoints + frontend buttons
-- Real-time updates (SignalR)
-- Proper error handling and loading states in the UI
-- End-to-end testing of moderation + background service
-- Production hardening (caching, connection pooling, logging sinks)
+**Deferred / later:**
+- FR-AI-009 scripted gag
+- Production logging sinks
+- Live key smoke against real vendor endpoints (ops)
 
 ---
 

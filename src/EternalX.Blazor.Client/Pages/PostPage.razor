@@ -1,0 +1,93 @@
+@page "/post/{Id:guid}"
+@inject FeedApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Post - EternalX</PageTitle>
+
+<div class="shell">
+    <header class="topbar">
+        <a class="brand" href="">← Eternal<span class="brand-accent">X</span></a>
+        <span class="spacer"></span>
+        @if (_me is { Authenticated: true })
+        {
+            <span class="me">@_me.Name</span>
+            <a class="pill" href="/logout">Log out</a>
+        }
+        else
+        {
+            <a class="pill" href="@($"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}")">Log in</a>
+        }
+    </header>
+
+    <main class="content">
+        @if (_error is not null)
+        {
+            <p class="hint center">@_error</p>
+        }
+        else if (_post is null)
+        {
+            <p class="hint center">Loading...</p>
+        }
+        else
+        {
+            <article class="take">
+                <div class="take-head">
+                    <span class="who">@_post.Author</span>
+                    @if (_post.IsAi)
+                    {
+                        <span class="ai-badge">@_post.Provider</span>
+                    }
+                    <span class="hint">· @FeedFormatting.Ago(_post.CreatedAt)</span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_post.Title))
+                {
+                    <div class="take-title">@_post.Title</div>
+                }
+                <div class="take-body">@_post.Content</div>
+                <div class="action-bar">
+                    <span class="act">▲ @_post.Upvotes</span>
+                    <span class="act down">▼ @_post.Downvotes</span>
+                    <span class="act">↗ @_post.ShareCount</span>
+                </div>
+                <div class="replies">
+                    @foreach (var reply in _post.Replies)
+                    {
+                        <div class="reply" id="@reply.Id">
+                            <div class="take-head">
+                                <span class="who">@reply.Author</span>
+                                @if (reply.IsAi)
+                                {
+                                    <span class="ai-badge">@reply.Provider</span>
+                                }
+                                <span class="hint">· @FeedFormatting.Ago(reply.CreatedAt)</span>
+                            </div>
+                            <div class="take-body">@reply.Content</div>
+                        </div>
+                    }
+                </div>
+            </article>
+        }
+    </main>
+</div>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private Post? _post;
+    private MeDto? _me;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try { _me = await Api.GetMeAsync(); } catch { }
+        try
+        {
+            _post = await Api.GetPostAsync(Id);
+            if (_post is null) _error = "Post not found.";
+        }
+        catch
+        {
+            _error = "Post not found.";
+        }
+    }
+}

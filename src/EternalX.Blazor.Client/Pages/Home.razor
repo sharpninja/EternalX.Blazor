@@ -1,6 +1,8 @@
 @page "/"
-@inject HttpClient Http
+@inject FeedApiClient Api
+@inject FeedRealtimeService Realtime
 @inject NavigationManager Nav
+@implements IAsyncDisposable
 
 <PageTitle>EternalX</PageTitle>
 
@@ -9,23 +11,45 @@
         <a class="brand" href=""><span class="brand-x">&#120143;</span> Eternal<span class="brand-accent">X</span></a>
         <span class="tagline">short takes from long-dead legends</span>
         <span class="spacer"></span>
+        @if (_ai is not null)
+        {
+            <span class="ai-chip" title="@(_ai.Live ? "Live AI providers" : "Stub AI (set provider API keys)")">
+                @if (_ai.Live)
+                {
+                    <text>live: @string.Join(", ", _ai.LiveProviders ?? _ai.Providers ?? new List<string>())</text>
+                }
+                else
+                {
+                    <text>stub</text>
+                }
+                @if (_ai.Paused) { <text> · paused</text> }
+            </span>
+        }
+        <span class="live-dot @(_realtimeOk ? "on" : "off")" title="@(_realtimeOk ? "SignalR connected" : "Polling fallback")"></span>
         @if (_me is { Authenticated: true })
         {
+            @if (_me.IsBanned)
+            {
+                <span class="ban-badge">banned</span>
+            }
             <span class="me">@_me.Name</span>
-            <form method="post" action="/logout" class="inline-form">
-                <button class="pill" type="submit">Log out</button>
-            </form>
+            @if (_me.IsAdmin)
+            {
+                <a class="pill" href="admin">Admin</a>
+            }
+            <a class="pill" href="/logout">Log out</a>
         }
         else if (_me is not null)
         {
-            <a class="pill" href="@($"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}")">Log in</a>
+            <a class="pill" href="@LoginHref()">Log in</a>
         }
     </header>
 
     <main class="content">
-        @if (_me is { Authenticated: true })
+        @if (_me is { Authenticated: true, IsBanned: false })
         {
             <div class="composer">
+                <input class="title-input" maxlength="100" @bind="_title" @bind:event="oninput" placeholder="Title (optional)" />
                 <textarea maxlength="280" @bind="_draft" @bind:event="oninput" placeholder="What's happening, mortal?"></textarea>
                 <div class="composer-bar">
                     <span class="counter">@(280 - (_draft?.Length ?? 0))</span>
@@ -36,9 +60,13 @@
                 </div>
             </div>
         }
+        else if (_me is { Authenticated: true, IsBanned: true })
+        {
+            <p class="login-hint">Your account is banned from posting. You can still read.</p>
+        }
         else if (_me is not null)
         {
-            <p class="login-hint">Read freely. <a href="@($"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}")">Log in</a> to post.</p>
+            <p class="login-hint">Read freely. <a href="@LoginHref()">Log in</a> to post.</p>
         }
 
         @if (_loading)
@@ -56,29 +84,60 @@
                 <article class="take">
                     <div class="take-head">
                         <span class="who">@post.Author</span>
-                        <span class="hint">· @Ago(post.CreatedAt)</span>
+                        @if (post.IsAi)
+                        {
+                            <span class="ai-badge">@Badge(post.Provider, post.Model)</span>
+                        }
+                        <span class="hint">· @FeedFormatting.Ago(post.CreatedAt)</span>
                     </div>
-                    <div class="take-body">@post.Content</div>
-                    @if (post.Replies.Count > 0)
+                    @if (!string.IsNullOrWhiteSpace(post.Title))
                     {
+                        <div class="take-title">@post.Title</div>
+                    }
+                    <div class="take-body">@post.Content</div>
+                    <div class="action-bar">
+                        <button class="act" disabled="@(!CanEngage)" @onclick="() => VotePost(post, 1)" title="Upvote">▲ @post.Upvotes</button>
+                        <button class="act down" disabled="@(!CanEngage)" @onclick="() => VotePost(post, -1)" title="Downvote">▼ @post.Downvotes</button>
+                        <span class="act score">@FeedFormatting.Score(post.Upvotes, post.Downvotes)</span>
                         <button class="act" @onclick="() => Toggle(post.Id)">
                             &#128172; @post.Replies.Count @(_open.Contains(post.Id) ? "▲" : "▼")
                         </button>
-                        @if (_open.Contains(post.Id))
-                        {
-                            <div class="replies">
-                                @foreach (var reply in post.Replies)
-                                {
-                                    <div class="reply">
-                                        <div class="take-head">
-                                            <span class="who">@reply.Author</span>
-                                            <span class="hint">· @Ago(reply.CreatedAt)</span>
-                                        </div>
-                                        <div class="take-body">@reply.Content</div>
+                        <button class="act" disabled="@(!CanEngage)" @onclick="() => Share(post)" title="Share">↗ @post.ShareCount</button>
+                        <a class="act link" href="@($"post/{post.Id}")">Open</a>
+                    </div>
+                    @if (_open.Contains(post.Id))
+                    {
+                        <div class="replies">
+                            @foreach (var reply in post.Replies)
+                            {
+                                <div class="reply">
+                                    <div class="take-head">
+                                        <span class="who">@reply.Author</span>
+                                        @if (reply.IsAi)
+                                        {
+                                            <span class="ai-badge">@Badge(reply.Provider, reply.Model)</span>
+                                        }
+                                        <span class="hint">· @FeedFormatting.Ago(reply.CreatedAt)</span>
                                     </div>
-                                }
-                            </div>
-                        }
+                                    <div class="take-body">@reply.Content</div>
+                                    <div class="action-bar compact">
+                                        <button class="act" disabled="@(!CanEngage)" @onclick="() => VoteReply(post, reply, 1)">▲ @reply.Upvotes</button>
+                                        <button class="act down" disabled="@(!CanEngage)" @onclick="() => VoteReply(post, reply, -1)">▼ @reply.Downvotes</button>
+                                    </div>
+                                </div>
+                            }
+                            @if (CanEngage)
+                            {
+                                <div class="reply-composer">
+                                    <textarea maxlength="280" @bind="_replyDrafts[post.Id]" @bind:event="oninput" placeholder="Reply..."></textarea>
+                                    <button class="pill primary" @onclick="() => Reply(post)" disabled="@string.IsNullOrWhiteSpace(GetReplyDraft(post.Id))">Reply</button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    @if (_shareMsg.TryGetValue(post.Id, out var sm))
+                    {
+                        <p class="share-msg">@sm</p>
                     }
                 </article>
             }
@@ -87,32 +146,59 @@
 </div>
 
 @code {
-    public sealed record Me(bool Authenticated, string? Name, bool Gateway);
-
-    private Me? _me;
+    private MeDto? _me;
+    private AiStatusDto? _ai;
     private List<Post> _posts = new();
     private readonly HashSet<Guid> _open = new();
+    private readonly Dictionary<Guid, string> _replyDrafts = new();
+    private readonly Dictionary<Guid, string> _shareMsg = new();
     private bool _loading = true;
     private bool _posting;
+    private bool _realtimeOk;
     private string _draft = "";
+    private string _title = "";
     private string _status = "";
-    private System.Threading.Timer? _refresh;
+    private System.Threading.Timer? _pollFallback;
+
+    private bool CanEngage => _me is { Authenticated: true, IsBanned: false };
 
     protected override async Task OnInitializedAsync()
     {
-        try { _me = await Http.GetFromJsonAsync<Me>("api/me"); } catch { }
+        try { _me = await Api.GetMeAsync(); } catch { }
+        try { _ai = await Api.GetAiStatusAsync(); } catch { }
         await Load();
-        // Simple polling keeps the feed fresh (background replies land every few seconds).
-        _refresh = new System.Threading.Timer(async _ =>
+
+        Realtime.FeedChanged += OnFeedChanged;
+        await Realtime.StartAsync();
+        _realtimeOk = Realtime.IsConnected;
+
+        // Slow backup poll if SignalR is down; otherwise only refresh AI chip occasionally.
+        _pollFallback = new System.Threading.Timer(async _ =>
         {
-            await Load();
-            await InvokeAsync(StateHasChanged);
-        }, null, TimeSpan.FromSeconds(12), TimeSpan.FromSeconds(12));
+            await Realtime.EnsureConnectedAsync();
+            var was = _realtimeOk;
+            _realtimeOk = Realtime.IsConnected;
+            if (!_realtimeOk)
+                await Load();
+            try { _ai = await Api.GetAiStatusAsync(); } catch { }
+            if (was != _realtimeOk)
+                await InvokeAsync(StateHasChanged);
+            else if (!_realtimeOk)
+                await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    private async Task OnFeedChanged(FeedChangeMessage msg)
+    {
+        _realtimeOk = true;
+        await Load();
+        try { _ai = await Api.GetAiStatusAsync(); } catch { }
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task Load()
     {
-        try { _posts = await Http.GetFromJsonAsync<List<Post>>("api/posts") ?? new(); }
+        try { _posts = await Api.GetPostsAsync(); }
         catch { _status = "Couldn't load the timeline."; }
         _loading = false;
     }
@@ -123,29 +209,95 @@
         _status = "";
         try
         {
-            var res = await Http.PostAsJsonAsync("api/posts", new { Content = _draft });
-            if (res.IsSuccessStatusCode) { _draft = ""; await Load(); }
-            else _status = (int)res.StatusCode switch
+            var res = await Api.CreatePostAsync(_draft, string.IsNullOrWhiteSpace(_title) ? null : _title);
+            if (res.IsSuccessStatusCode)
             {
-                429 => "Easy - one post per minute.",
-                422 => "Blocked by the moderator.",
-                _ => "Log in to post."
-            };
+                _draft = "";
+                _title = "";
+                await Load();
+                if (_posts.Count > 0) _open.Add(_posts[0].Id);
+            }
+            else
+            {
+                _status = (int)res.StatusCode switch
+                {
+                    429 => "Easy - one post per minute.",
+                    422 => "Blocked by the moderator.",
+                    403 => "Banned from posting.",
+                    _ => "Log in to post."
+                };
+            }
         }
         catch { _status = "Log in to post."; }
         _posting = false;
     }
 
-    private void Toggle(Guid id)
+    private async Task Reply(Post post)
     {
-        if (!_open.Remove(id)) _open.Add(id);
+        var text = GetReplyDraft(post.Id);
+        if (string.IsNullOrWhiteSpace(text)) return;
+        var res = await Api.CreateReplyAsync(post.Id, text);
+        if (res.IsSuccessStatusCode)
+        {
+            _replyDrafts[post.Id] = "";
+            await Load();
+            _open.Add(post.Id);
+        }
+        else
+            _status = "Reply failed.";
     }
 
-    private static string Ago(DateTime utc)
+    private async Task VotePost(Post post, int value)
     {
-        var d = DateTime.UtcNow - utc;
-        return d.TotalMinutes < 60 ? $"{(int)Math.Max(1, d.TotalMinutes)}m"
-             : d.TotalHours < 24 ? $"{(int)d.TotalHours}h"
-             : $"{(int)d.TotalDays}d";
+        var res = await Api.VotePostAsync(post.Id, value);
+        if (res.IsSuccessStatusCode) await Load();
+    }
+
+    private async Task VoteReply(Post post, Reply reply, int value)
+    {
+        var res = await Api.VoteReplyAsync(post.Id, reply.Id, value);
+        if (res.IsSuccessStatusCode) await Load();
+    }
+
+    private async Task Share(Post post)
+    {
+        var res = await Api.SharePostAsync(post.Id);
+        if (!res.IsSuccessStatusCode)
+        {
+            _shareMsg[post.Id] = "Share failed (log in?).";
+            return;
+        }
+        var link = Nav.ToAbsoluteUri($"post/{post.Id}").ToString();
+        _shareMsg[post.Id] = $"Link: {link}";
+        await Load();
+    }
+
+    private void Toggle(Guid id)
+    {
+        if (!_open.Remove(id))
+        {
+            _open.Add(id);
+            if (!_replyDrafts.ContainsKey(id))
+                _replyDrafts[id] = "";
+        }
+    }
+
+    private string GetReplyDraft(Guid id) =>
+        _replyDrafts.TryGetValue(id, out var v) ? v : "";
+
+    private string LoginHref() =>
+        $"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+
+    private static string Badge(string? provider, string? model)
+    {
+        if (string.IsNullOrEmpty(provider)) return "AI";
+        return string.IsNullOrEmpty(model) ? provider : $"{provider}/{model}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Realtime.FeedChanged -= OnFeedChanged;
+        _pollFallback?.Dispose();
+        await Realtime.DisposeAsync();
     }
 }

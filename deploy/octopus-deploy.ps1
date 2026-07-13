@@ -2,6 +2,12 @@
 # (Octopus Git trigger polls main and the Development phase auto-deploys the release).
 # Joins the shared eternal docker network behind the EternalSocial gateway at /x
 # and authenticates users via the stable GATEWAY_KEY (EternalSocial library set).
+#
+# AI keys reuse the same Octopus Sensitive names as EternalReddit / EternalReadit
+# (library or project variables already provisioned for Claude + Grok):
+#   ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, HF_API_KEY
+# Optional aliases also accepted by the app if present in Octopus:
+#   CLAUDE_API_KEY, GROK_API_KEY, HUGGINGFACE_API_KEY
 $ErrorActionPreference = 'Stop'
 
 $image = 'eternalx:latest'
@@ -49,14 +55,55 @@ if ($LASTEXITCODE -ne 0) { throw "docker build (eternalx) failed with exit code 
 
 if (-not (docker network ls -q --filter "name=^$network$")) {
     docker network create $network | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "docker network create failed with exit code $LASTEXITCODE" }
 }
 
-TeardownContainer $container
-docker run -d --name $container --restart unless-stopped --network $network -v eternalx-data:/app/data `
-    -e ASPNETCORE_ENVIRONMENT=Production `
-    -e PATH_BASE=/x `
-    -e GATEWAY_KEY=$gatewayKey `
-    $image
-if ($LASTEXITCODE -ne 0) { throw "docker run (eternalx) failed with exit code $LASTEXITCODE" }
+# Shared AI Sensitive variables (same names as EternalReadit) plus optional aliases / settings.
+# Only non-empty values are written so missing optional keys do not blank the container.
+$envFile = Join-Path $env:TEMP 'eternalx.env'
+$names = @(
+    'ANTHROPIC_API_KEY',
+    'CLAUDE_API_KEY',
+    'OPENAI_API_KEY',
+    'XAI_API_KEY',
+    'GROK_API_KEY',
+    'HF_API_KEY',
+    'HUGGINGFACE_API_KEY',
+    'DEFAULT_AI_PROVIDER',
+    'ANTHROPIC_MODEL',
+    'CLAUDE_MODEL',
+    'OPENAI_MODEL',
+    'XAI_MODEL',
+    'GROK_MODEL',
+    'Authorization__AdminEmail'
+)
+$lines = foreach ($n in $names) {
+    $v = $OctopusParameters[$n]
+    if ($v) { "$n=$v" }
+}
+$lines = @($lines) + "GATEWAY_KEY=$gatewayKey"
+[System.IO.File]::WriteAllLines($envFile, [string[]]$lines)
 
-Write-Host 'EternalX deployed behind the gateway at /x.'
+$liveClaude = [bool]($OctopusParameters['ANTHROPIC_API_KEY'] -or $OctopusParameters['CLAUDE_API_KEY'])
+$liveGrok = [bool]($OctopusParameters['XAI_API_KEY'] -or $OctopusParameters['GROK_API_KEY'])
+Write-Host ("AI keys present for container: claude={0} grok={1} openai={2} hf={3}" -f `
+    $liveClaude, `
+    $liveGrok, `
+    [bool]$OctopusParameters['OPENAI_API_KEY'], `
+    [bool]($OctopusParameters['HF_API_KEY'] -or $OctopusParameters['HUGGINGFACE_API_KEY']))
+
+try {
+    TeardownContainer $container
+    docker run -d --name $container --restart unless-stopped --network $network `
+        -v eternalx-data:/app/data `
+        -e ASPNETCORE_ENVIRONMENT=Production `
+        -e PATH_BASE=/x `
+        --env-file $envFile `
+        $image
+    if ($LASTEXITCODE -ne 0) { throw "docker run (eternalx) failed with exit code $LASTEXITCODE" }
+}
+finally {
+    try { [System.IO.File]::Delete($envFile) } catch { }
+}
+
+Write-Host 'EternalX deployed behind the gateway at /x (live AI when Claude/Grok keys are in Octopus).'

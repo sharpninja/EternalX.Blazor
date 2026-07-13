@@ -1,32 +1,43 @@
 using EternalX.Blazor.Server.Api;
 using EternalX.Blazor.Server.Auth;
 using EternalX.Blazor.Server.Data;
+using EternalX.Blazor.Server.Hubs;
 using EternalX.Blazor.Server.Services;
+using EternalX.Blazor.Shared;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddSignalR();
+
+// Named HttpClient for live AI providers (timeouts, no cookies).
+builder.Services.AddHttpClient(AiService.AiHttpClientName, client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(45);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("EternalX.Blazor/1.0");
+});
 builder.Services.AddHttpClient();
-builder.Services.AddHealthChecks();
 
 // LiteDB
 builder.Services.AddSingleton<LiteDbService>();
 
-// AI and Moderator
+// AI, moderation, deep threads, auto-reply, feed push
 builder.Services.AddSingleton<AiService>();
 builder.Services.AddSingleton<ModeratorService>();
+builder.Services.AddSingleton<DeepThreadService>();
 builder.Services.AddSingleton(new AutoReplyOptions());
-
-// Background Auto-Reply Service (policy-gated: quiet period + reply cap)
+builder.Services.AddSingleton<IFeedNotifier, SignalRFeedNotifier>();
 builder.Services.AddHostedService<AutoReplyBackgroundService>();
 
-// Rate Limiting: 1 post per minute per IP. Scoped to the posting endpoint as the
-// "post" policy (a global limiter would throttle page assets and feed reads too).
+// Health: process + open LiteDB
+builder.Services.AddHealthChecks()
+    .AddCheck<LiteDbHealthCheck>("litedb");
+
+// Rate Limiting: 1 post per minute per IP (post policy only).
 builder.Services.AddRateLimiter(options =>
 {
     options.AddPolicy("post", context =>
@@ -49,8 +60,7 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-// Authentication: EternalSocial gateway only (no local OIDC). The proxy supplies
-// X-Gateway-Key (shared secret) plus X-Auth-UserId/Name/Email on each request.
+// Authentication: EternalSocial gateway only (no local OIDC).
 if (string.IsNullOrWhiteSpace(builder.Configuration["GATEWAY_KEY"]))
 {
     throw new InvalidOperationException(
@@ -65,7 +75,6 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Behind the gateway: honor its forwarded headers and absorb the /x path prefix.
 var forwarded = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
@@ -78,7 +87,6 @@ var pathBase = (builder.Configuration["PATH_BASE"] ?? "").TrimEnd('/');
 if (!string.IsNullOrEmpty(pathBase))
     app.UsePathBase(pathBase);
 
-// Configure pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -101,9 +109,10 @@ app.UseAuthorization();
 app.MapRazorPages();
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapHub<FeedHub>(FeedEvents.HubPath);
 app.MapPostEndpoints();
+app.MapAdminEndpoints();
 
-// SPA fallback with the base href rewritten for the gateway prefix.
 string? LoadIndex()
 {
     var file = app.Environment.WebRootFileProvider.GetFileInfo("index.html");
@@ -124,5 +133,4 @@ app.MapFallback(async ctx =>
 
 app.Run();
 
-/// <summary>Exposed for integration testing.</summary>
 public partial class Program;

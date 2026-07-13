@@ -22,4 +22,7 @@
     <ProjectReference Include="..\..\src\EternalX.Blazor.Shared\EternalX.Blazor.Shared.csproj" />
   </ItemGroup>
 
+  <!-- Deploy script lives outside bin; copy for content-assert tests when needed.
+       Tests resolve the repo root by walking parents for deploy/octopus-deploy.ps1. -->
+
 </Project>
