@@ -24,8 +24,10 @@
     <style>
         /* Reserve room for the EternalSocial pinned footer; --es-footer-h is
            published by the gateway's injected footer and absent when the app
-           is reached directly, so this collapses to zero. */
+           is reached directly, so this collapses to zero. The frame and rail
+           shrink by the footer height so the page never gains a dead scroll. */
         body { padding-bottom: var(--es-footer-h, 0rem); }
+        .app-frame, .left-rail { min-height: calc(100vh - var(--es-footer-h, 0rem)); }
     </style>
     <!--ETERNALSOCIAL-FOOTER-->
 </body>
