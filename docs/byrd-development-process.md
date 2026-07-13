@@ -15,7 +15,8 @@ Sibling product docs may be read under `docs/` only (`EternalReddit`, `EternalDi
 ## Non-negotiable gates
 
 1. **Requirements first**  
-   Capture or update Functional (FR), Technical (TR), and Testing (TEST) requirements through the MCP requirements workflow before implementation. Map FR to TR and TEST. Include requirement IDs on TODOs and in the session log.
+   Capture or update Functional (FR), Technical (TR), and Testing (TEST) requirements through the MCP requirements workflow before implementation. Map FR to TR and TEST. Include requirement IDs on TODOs and in the session log.  
+   **Sibling inheritance:** requirements from EternalReddit and EternalDiscord (their `docs/` only) apply here **except** where they conflict with this repo’s requirements; **local wins**. See `docs/requirements-precedence.md`.
 
 2. **Decision-complete plans**  
    Plans are frontier-model handoff artifacts. Lock intended behavior, public interfaces, data shapes, migration/backfill, failure modes, rollout/deployment path, validation commands, and acceptance criteria **before** implementation. Get explicit operator approval before edits that change behavior or architecture.

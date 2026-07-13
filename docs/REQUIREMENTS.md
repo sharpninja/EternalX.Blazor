@@ -1,8 +1,10 @@
-# EternalX.Blazor — Detailed Requirements Specification
+# EternalX.Blazor - Detailed Requirements Specification
 
 **Version:** 1.0  
 **Date:** 2026-07-12  
-**Status:** Active — Backend foundation complete, Frontend pending
+**Status:** Active - Backend foundation complete, Frontend pending
+
+**Precedence:** Requirements from sibling repos (EternalReddit, EternalDiscord) also apply to this product **except** where they conflict with this document or other native EternalX.Blazor requirements. **This repository wins on conflict.** Full rule: [`requirements-precedence.md`](requirements-precedence.md).
 
 ---
 
@@ -12,7 +14,10 @@
 **Type:** Blazor WebAssembly Hosted (Client + Server API)  
 **Deployment Target:** Docker container, managed via Octopus Deploy  
 **Public Access:** ngrok tunnel for local development + OAuth callback testing  
+**UI paradigm:** **Twitter / X-style** (timeline feed, composer, threaded replies, engagement affordances). Not Reddit listing UI and not Discord chat UI.  
 **Core Concept:** A modern, interactive social feed where historical, legendary, and mythical figures reply to user posts using real AI, with rich crossovers, moderation, and background activity.
+
+**Eternal network:** Core **data** and **AI interactions** are shared with EternalReddit and EternalDiscord; only the **UI shell** differs significantly. **Shared requirements do not imply a shared codebase:** each product agent owns a unique implementation (GrokCode owns this repo). Architecture note: [`product-architecture.md`](product-architecture.md). Sibling requirements still apply subject to [`requirements-precedence.md`](requirements-precedence.md).
 
 The application allows anonymous reading but requires authentication to post or interact. All AI replies are generated server-side using credentials supplied by the operator (not end users).
 

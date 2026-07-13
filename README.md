@@ -2,6 +2,8 @@
 
 A full-featured Blazor WebAssembly Hosted application running in Docker.
 
+**Eternal network:** shares core data and AI interaction semantics with EternalReddit and EternalDiscord; this product's UI is **Twitter / X-style** (siblings: classic Reddit UI, Discord chat UI). Each agent owns a **unique implementation** of shared requirements in their own repo (GrokCode here). See [`docs/product-architecture.md`](docs/product-architecture.md).
+
 ## Features
 - Anonymous reading of the Eternal Feed
 - Login with Google, Microsoft, or GitHub (OpenID Connect)
@@ -40,6 +42,8 @@ ngrok is included as a sidecar service. It provides a public HTTPS URL for your 
 ## Documentation
 
 - **Process (mandatory):** all work must follow [Byrd Development Process v4](docs/byrd-development-process.md) (canonical source: McpServer `docs/Development-Process-draft-v4.md`)
+- **Requirements precedence:** sibling `docs/` requirements apply unless they conflict with this repo; local wins ([`docs/requirements-precedence.md`](docs/requirements-precedence.md))
+- Product architecture (shared core / divergent UI): [`docs/product-architecture.md`](docs/product-architecture.md)
 - Product requirements: [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md)
 - Octopus Deploy configuration: [`docs/deploy/octopus.md`](docs/deploy/octopus.md)
 
