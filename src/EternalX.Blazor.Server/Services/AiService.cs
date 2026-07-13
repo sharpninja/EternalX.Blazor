@@ -21,6 +21,7 @@ public class AiService
     private readonly LiteDbService _db;
     private readonly ILogger<AiService>? _logger;
     private int _roundRobin;
+    private string? _lastError;
 
     /// <summary>
     /// Sole public constructor for DI. Do not add other public constructors whose
@@ -89,6 +90,9 @@ public class AiService
 
     public bool HasLiveProviders => LiveProviderNames().Count > 0;
 
+    /// <summary>Last provider failure message (for admin diagnostics; no secrets).</summary>
+    public string? LastError => _lastError;
+
     /// <summary>Admin inventory: key presence + enable flag without exposing secrets.</summary>
     public IReadOnlyList<AiAgentStatus> GetAgentStatuses()
     {
@@ -136,6 +140,7 @@ public class AiService
         try
         {
             var result = await provider.GenerateAsync(request, cancellationToken).ConfigureAwait(false);
+            _lastError = null;
             _logger?.LogInformation(
                 "AI generate ok provider={Provider} model={Model} figure={Figure} chars={Chars}",
                 result.Provider,
@@ -146,11 +151,13 @@ public class AiService
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(
+            _lastError = $"{provider.Name}: {ex.Message}";
+            _logger?.LogError(
                 ex,
-                "AI provider {Provider} failed for figure {Figure}; falling back to stub",
+                "AI provider {Provider} failed for figure {Figure}; falling back to stub. Error={Error}",
                 provider.Name,
-                figure.Name);
+                figure.Name,
+                ex.Message);
 
             return await _stub.GenerateAsync(request, cancellationToken).ConfigureAwait(false);
         }

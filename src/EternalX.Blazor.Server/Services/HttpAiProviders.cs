@@ -57,7 +57,7 @@ public sealed class ClaudeAiProvider : EnvHttpAiProvider
                   ?? throw new InvalidOperationException("Claude API key missing.");
         var model = request.Model
                     ?? FirstConfig("ANTHROPIC_MODEL", "CLAUDE_MODEL")
-                    ?? "claude-3-5-haiku-latest";
+                    ?? "claude-sonnet-4-20250514";
 
         using var msg = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
         msg.Headers.TryAddWithoutValidation("x-api-key", key);
@@ -139,7 +139,8 @@ public sealed class GrokAiProvider : EnvHttpAiProvider
     {
         var key = FirstConfig("XAI_API_KEY", "GROK_API_KEY")
                   ?? throw new InvalidOperationException("Grok/xAI API key missing.");
-        var model = request.Model ?? FirstConfig("XAI_MODEL", "GROK_MODEL") ?? "grok-2-latest";
+        // grok-2-latest was retired; account catalog uses grok-4.x aliases (2026).
+        var model = request.Model ?? FirstConfig("XAI_MODEL", "GROK_MODEL") ?? "grok-4.3";
         var baseUrl = FirstConfig("XAI_BASE_URL", "GROK_BASE_URL") ?? "https://api.x.ai/v1";
 
         using var msg = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl.TrimEnd('/')}/chat/completions");

@@ -85,7 +85,8 @@ public static class PostEndpoints
                                   ?? "grok",
                 figureCount = db.GetFigures(enabledOnly: true).Count,
                 postCount = db.CountPosts(),
-                signalR = FeedEvents.HubPath
+                signalR = FeedEvents.HubPath,
+                lastError = ai.LastError
             });
         });
 

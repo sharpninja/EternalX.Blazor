@@ -28,7 +28,7 @@ and passes `--env-file` into the container (same pattern as EternalReadit).
 ## Optional settings
 
 - `DEFAULT_AI_PROVIDER` = `claude` | `openai` | `grok` | `huggingface`
-- `ANTHROPIC_MODEL` / `CLAUDE_MODEL`, `XAI_MODEL` / `GROK_MODEL`, `OPENAI_MODEL`
+- `ANTHROPIC_MODEL` / `CLAUDE_MODEL`, `XAI_MODEL` / `GROK_MODEL` (default code path: `grok-4.3`; `grok-2-latest` is retired), `OPENAI_MODEL`
 - `Authorization__AdminEmail` - **required for Admin nav/API**. Must match the gateway `X-Auth-Email` for the owner (sibling default: `plbyrd@gmail.com`). Without this, the left-rail Admin link never appears and `/api/admin/*` returns 403.
 - `PATH_BASE` = `/x` (hard-coded in the deploy script for estate mode)
 - `LITEDB_PATH` = `/app/data/eternalx.db` (default inside image)
