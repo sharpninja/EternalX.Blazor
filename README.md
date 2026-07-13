@@ -37,14 +37,20 @@ ngrok is included as a sidecar service. It provides a public HTTPS URL for your 
 - The Moderator runs on every new post.
 - The Auto-Reply service runs continuously in the background.
 
+## Documentation
+
+- **Process (mandatory):** all work must follow [Byrd Development Process v4](docs/byrd-development-process.md) (canonical source: McpServer `docs/Development-Process-draft-v4.md`)
+- Product requirements: [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md)
+- Octopus Deploy configuration: [`docs/deploy/octopus.md`](docs/deploy/octopus.md)
+
 ## Deployment with Octopus Deploy
 
-See `deploy/octopus/README.md` for full configuration instructions.
+See [`docs/deploy/octopus.md`](docs/deploy/octopus.md) for full configuration instructions.
 
 **Quick Summary:**
 - Build and push Docker image to your container registry
 - Create Octopus Project "EternalX"
-- Add the sensitive variables listed in `deploy/octopus/README.md`
+- Add the sensitive variables listed in `docs/deploy/octopus.md`
 - Use the **Deploy Docker Container** step
 - Map Octopus variables to container environment variables
 - LiteDB data persists via a mounted volume at `/app/data`
