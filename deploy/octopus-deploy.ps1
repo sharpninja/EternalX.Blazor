@@ -1,4 +1,5 @@
-# EternalX deploy: built and run independently; a push to this repo triggers it.
+# EternalX deploy: built and run independently; a push to this repo triggers it
+# (Octopus Git trigger polls main and the Development phase auto-deploys the release).
 # Joins the shared eternal docker network behind the EternalSocial gateway at /x
 # and authenticates users via the stable GATEWAY_KEY (EternalSocial library set).
 $ErrorActionPreference = 'Stop'
