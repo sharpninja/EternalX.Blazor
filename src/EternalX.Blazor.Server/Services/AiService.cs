@@ -14,23 +14,26 @@ public class AiService
     private readonly ILogger<AiService>? _logger;
     private int _roundRobin;
 
+    /// <summary>
+    /// Sole public constructor for DI. Do not add other public constructors whose
+    /// parameters are all container-resolvable (causes ambiguous activation).
+    /// </summary>
     public AiService(
         IConfiguration config,
         IHttpClientFactory httpClientFactory,
         LiteDbService db,
         ILogger<AiService>? logger = null)
-        : this(config, db, CreateDefaultProviders(config, httpClientFactory.CreateClient(AiHttpClientName), logger), new StubAiProvider(), logger)
+        : this(
+            config,
+            db,
+            CreateDefaultProviders(config, httpClientFactory.CreateClient(AiHttpClientName), logger),
+            new StubAiProvider(),
+            logger)
     {
     }
 
-    /// <summary>Legacy/test constructor with a single HttpClient.</summary>
-    public AiService(IConfiguration config, HttpClient httpClient, LiteDbService db)
-        : this(config, db, CreateDefaultProviders(config, httpClient, null), new StubAiProvider(), null)
-    {
-    }
-
-    /// <summary>Test constructor with injectable providers.</summary>
-    public AiService(
+    /// <summary>Test-only path with injectable providers (not used by the DI container).</summary>
+    internal AiService(
         IConfiguration config,
         LiteDbService db,
         IEnumerable<IAiProvider> providers,
@@ -84,7 +87,6 @@ public class AiService
         settings.ProviderModels.TryGetValue(provider.Name, out var model);
         settings.ProviderEfforts.TryGetValue(provider.Name, out var effort);
 
-        // Env model overrides when settings do not set one.
         model ??= provider.Name switch
         {
             "claude" => FirstConfig("ANTHROPIC_MODEL", "CLAUDE_MODEL"),
@@ -120,7 +122,6 @@ public class AiService
                 provider.Name,
                 figure.Name);
 
-            // Soft-fail to stub so feed never hard-crashes on provider outages.
             return await _stub.GenerateAsync(request, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -182,7 +183,6 @@ public class AiService
             return configured[Math.Abs(idx) % configured.Count];
         }
 
-        // Prefer DEFAULT_AI_PROVIDER among live providers, else first live.
         var def = _config["DEFAULT_AI_PROVIDER"];
         if (!string.IsNullOrWhiteSpace(def))
         {

@@ -1,19 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="LiteDB" Version="5.0.21" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.9" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\EternalX.Blazor.Client\EternalX.Blazor.Client.csproj" />
     <ProjectReference Include="..\EternalX.Blazor.Shared\EternalX.Blazor.Shared.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <InternalsVisibleTo Include="EternalX.Blazor.Server.Tests" />
+  </ItemGroup>
 </Project>

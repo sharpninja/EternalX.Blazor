@@ -1,3 +1,4 @@
+using EternalX.Blazor.Server;
 using EternalX.Blazor.Server.Api;
 using EternalX.Blazor.Server.Auth;
 using EternalX.Blazor.Server.Data;
@@ -14,22 +15,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
 
-// Named HttpClient for live AI providers (timeouts, no cookies).
-builder.Services.AddHttpClient(AiService.AiHttpClientName, client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(45);
-    client.DefaultRequestHeaders.UserAgent.ParseAdd("EternalX.Blazor/1.0");
-});
-builder.Services.AddHttpClient();
-
-// LiteDB
-builder.Services.AddSingleton<LiteDbService>();
-
-// AI, moderation, deep threads, auto-reply, feed push
-builder.Services.AddSingleton<AiService>();
-builder.Services.AddSingleton<ModeratorService>();
-builder.Services.AddSingleton<DeepThreadService>();
-builder.Services.AddSingleton(new AutoReplyOptions());
+// Core app services (explicit AiService factory avoids ambiguous DI constructors).
+builder.Services.AddEternalXApplicationServices();
 builder.Services.AddSingleton<IFeedNotifier, SignalRFeedNotifier>();
 builder.Services.AddHostedService<AutoReplyBackgroundService>();
 

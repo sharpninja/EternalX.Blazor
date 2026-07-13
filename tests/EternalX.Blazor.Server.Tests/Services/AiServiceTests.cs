@@ -2,6 +2,7 @@ using EternalX.Blazor.Server.Data;
 using EternalX.Blazor.Server.Services;
 using EternalX.Blazor.Shared.Models;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EternalX.Blazor.Server.Tests.Services;
 
@@ -26,7 +27,8 @@ public class AiServiceTests : IDisposable
     public async Task GenerateReplyAsync_does_not_echo_full_prompt()
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        var ai = new AiService(config, new HttpClient(), _db);
+        // Internal test ctor: no keys → stub path via empty live provider list.
+        var ai = new AiService(config, _db, Array.Empty<IAiProvider>());
         var huge = new string('z', 20_000);
 
         var reply = await ai.GenerateReplyAsync(huge, "claude");
@@ -58,5 +60,33 @@ public class AiServiceTests : IDisposable
         var ai = new AiService(config, _db, Array.Empty<IAiProvider>());
         var names = ai.ConfiguredProviderNames();
         Assert.Contains("stub", names);
+    }
+
+    [Fact]
+    public async Task Public_di_constructor_boots_with_no_ai_keys()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["LITEDB_PATH"] = _path,
+                ["DEFAULT_AI_PROVIDER"] = "grok"
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(config);
+        services.AddLogging();
+        services.AddHttpClient(AiService.AiHttpClientName);
+        services.AddSingleton(_db);
+
+        var factory = services.BuildServiceProvider().GetRequiredService<IHttpClientFactory>();
+        var ai = new AiService(config, factory, _db);
+
+        Assert.False(ai.HasLiveProviders);
+        Assert.Contains("stub", ai.ConfiguredProviderNames());
+
+        var figure = new Figure { Id = "f", Name = "Ada", Persona = "Engine" };
+        var result = await ai.GenerateForFigureAsync(figure, "hi");
+        Assert.Equal("stub", result.Provider);
     }
 }
