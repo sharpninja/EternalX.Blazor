@@ -1,0 +1,151 @@
+@page "/"
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>EternalX</PageTitle>
+
+<div class="shell">
+    <header class="topbar">
+        <a class="brand" href=""><span class="brand-x">&#120143;</span> Eternal<span class="brand-accent">X</span></a>
+        <span class="tagline">short takes from long-dead legends</span>
+        <span class="spacer"></span>
+        @if (_me is { Authenticated: true })
+        {
+            <span class="me">@_me.Name</span>
+            <form method="post" action="/logout" class="inline-form">
+                <button class="pill" type="submit">Log out</button>
+            </form>
+        }
+        else if (_me is not null)
+        {
+            <a class="pill" href="@($"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}")">Log in</a>
+        }
+    </header>
+
+    <main class="content">
+        @if (_me is { Authenticated: true })
+        {
+            <div class="composer">
+                <textarea maxlength="280" @bind="_draft" @bind:event="oninput" placeholder="What's happening, mortal?"></textarea>
+                <div class="composer-bar">
+                    <span class="counter">@(280 - (_draft?.Length ?? 0))</span>
+                    <span class="status">@_status</span>
+                    <button class="pill primary" @onclick="Post" disabled="@(_posting || string.IsNullOrWhiteSpace(_draft))">
+                        @(_posting ? "Posting..." : "Post")
+                    </button>
+                </div>
+            </div>
+        }
+        else if (_me is not null)
+        {
+            <p class="login-hint">Read freely. <a href="@($"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}")">Log in</a> to post.</p>
+        }
+
+        @if (_loading)
+        {
+            <p class="hint center">Loading the timeline...</p>
+        }
+        else if (_posts.Count == 0)
+        {
+            <p class="hint center">Silence across the centuries. It won't last.</p>
+        }
+        else
+        {
+            @foreach (var post in _posts)
+            {
+                <article class="take">
+                    <div class="take-head">
+                        <span class="who">@post.Author</span>
+                        <span class="hint">· @Ago(post.CreatedAt)</span>
+                    </div>
+                    <div class="take-body">@post.Content</div>
+                    @if (post.Replies.Count > 0)
+                    {
+                        <button class="act" @onclick="() => Toggle(post.Id)">
+                            &#128172; @post.Replies.Count @(_open.Contains(post.Id) ? "▲" : "▼")
+                        </button>
+                        @if (_open.Contains(post.Id))
+                        {
+                            <div class="replies">
+                                @foreach (var reply in post.Replies)
+                                {
+                                    <div class="reply">
+                                        <div class="take-head">
+                                            <span class="who">@reply.Author</span>
+                                            <span class="hint">· @Ago(reply.CreatedAt)</span>
+                                        </div>
+                                        <div class="take-body">@reply.Content</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                </article>
+            }
+        }
+    </main>
+</div>
+
+@code {
+    public sealed record Me(bool Authenticated, string? Name, bool Gateway);
+
+    private Me? _me;
+    private List<Post> _posts = new();
+    private readonly HashSet<Guid> _open = new();
+    private bool _loading = true;
+    private bool _posting;
+    private string _draft = "";
+    private string _status = "";
+    private System.Threading.Timer? _refresh;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _me = await Http.GetFromJsonAsync<Me>("api/me"); } catch { }
+        await Load();
+        // Simple polling keeps the feed fresh (background replies land every few seconds).
+        _refresh = new System.Threading.Timer(async _ =>
+        {
+            await Load();
+            await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(12), TimeSpan.FromSeconds(12));
+    }
+
+    private async Task Load()
+    {
+        try { _posts = await Http.GetFromJsonAsync<List<Post>>("api/posts") ?? new(); }
+        catch { _status = "Couldn't load the timeline."; }
+        _loading = false;
+    }
+
+    private async Task Post()
+    {
+        _posting = true;
+        _status = "";
+        try
+        {
+            var res = await Http.PostAsJsonAsync("api/posts", new { Content = _draft });
+            if (res.IsSuccessStatusCode) { _draft = ""; await Load(); }
+            else _status = (int)res.StatusCode switch
+            {
+                429 => "Easy - one post per minute.",
+                422 => "Blocked by the moderator.",
+                _ => "Log in to post."
+            };
+        }
+        catch { _status = "Log in to post."; }
+        _posting = false;
+    }
+
+    private void Toggle(Guid id)
+    {
+        if (!_open.Remove(id)) _open.Add(id);
+    }
+
+    private static string Ago(DateTime utc)
+    {
+        var d = DateTime.UtcNow - utc;
+        return d.TotalMinutes < 60 ? $"{(int)Math.Max(1, d.TotalMinutes)}m"
+             : d.TotalHours < 24 ? $"{(int)d.TotalHours}h"
+             : $"{(int)d.TotalDays}d";
+    }
+}
