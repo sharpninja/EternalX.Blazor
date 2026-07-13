@@ -86,7 +86,14 @@ else
 
 app.UseHttpsRedirection();
 app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
+// Non-fingerprinted assets (css/app.css, index.html) must revalidate on every
+// load; without this browsers cache heuristically and serve stale styles after
+// a redesign (the framework's fingerprinted files under _framework are immune).
+var noCacheStatics = new StaticFileOptions
+{
+    OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = "no-cache"
+};
+app.UseStaticFiles(noCacheStatics);
 app.UseRouting();
 
 app.UseRateLimiter();
