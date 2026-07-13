@@ -1,0 +1,99 @@
+@inject FeedApiClient Api
+@inject NavigationManager Nav
+@implements IDisposable
+
+<aside class="left-rail" aria-label="Primary">
+    <a class="rail-logo" href="" title="EternalX Home">
+        <span class="brand-x">&#120143;</span>
+    </a>
+
+    <nav class="rail-nav">
+        <NavLink class="rail-item" href="" Match="NavLinkMatch.All">
+            <span class="rail-icon" aria-hidden="true">⌂</span>
+            <span class="rail-label">Home</span>
+        </NavLink>
+
+        @if (_me is { IsAdmin: true })
+        {
+            <NavLink class="rail-item rail-admin" href="admin">
+                <span class="rail-icon" aria-hidden="true">⚙</span>
+                <span class="rail-label">Admin</span>
+            </NavLink>
+        }
+
+        @if (_me is { Authenticated: true })
+        {
+            <a class="rail-item" href="/logout">
+                <span class="rail-icon" aria-hidden="true">↪</span>
+                <span class="rail-label">Log out</span>
+            </a>
+        }
+        else if (_me is not null)
+        {
+            <a class="rail-item" href="@LoginHref()">
+                <span class="rail-icon" aria-hidden="true">↪</span>
+                <span class="rail-label">Log in</span>
+            </a>
+        }
+    </nav>
+
+    <div class="rail-footer">
+        @if (_me is { Authenticated: true })
+        {
+            <div class="rail-user" title="@_me.Email">
+                <span class="rail-avatar">@Initials(_me.Name)</span>
+                <span class="rail-user-meta">
+                    <span class="rail-user-name">@(_me.Name ?? "Member")</span>
+                    @if (_me.IsBanned)
+                    {
+                        <span class="ban-badge">banned</span>
+                    }
+                    else if (_me.IsAdmin)
+                    {
+                        <span class="rail-user-role">owner</span>
+                    }
+                </span>
+            </div>
+        }
+        else if (_me is not null)
+        {
+            <a class="rail-cta" href="@LoginHref()">Log in</a>
+        }
+    </div>
+</aside>
+
+@code {
+    private MeDto? _me;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        await RefreshMe();
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await RefreshMe();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RefreshMe()
+    {
+        try { _me = await Api.GetMeAsync(); }
+        catch { _me = new MeDto(false, null, null, null, false, false, true); }
+    }
+
+    private string LoginHref() =>
+        $"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+
+    private static string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+            return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
+        return char.ToUpperInvariant(name.Trim()[0]).ToString();
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

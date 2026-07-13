@@ -2,159 +2,117 @@
 @inject FeedApiClient Api
 @inject FeedRealtimeService Realtime
 @inject NavigationManager Nav
-@implements IAsyncDisposable
+@implements IDisposable
 
-<PageTitle>EternalX</PageTitle>
+<PageTitle>Home / EternalX</PageTitle>
 
-<div class="shell">
-    <header class="topbar">
-        <a class="brand" href=""><span class="brand-x">&#120143;</span> Eternal<span class="brand-accent">X</span></a>
-        <span class="tagline">short takes from long-dead legends</span>
-        <span class="spacer"></span>
-        @if (_ai is not null)
-        {
-            <span class="ai-chip" title="@(_ai.Live ? "Live AI providers" : "Stub AI (set provider API keys)")">
-                @if (_ai.Live)
-                {
-                    <text>live: @string.Join(", ", _ai.LiveProviders ?? _ai.Providers ?? new List<string>())</text>
-                }
-                else
-                {
-                    <text>stub</text>
-                }
-                @if (_ai.Paused) { <text> · paused</text> }
-            </span>
-        }
-        <span class="live-dot @(_realtimeOk ? "on" : "off")" title="@(_realtimeOk ? "SignalR connected" : "Polling fallback")"></span>
-        @if (_me is { Authenticated: true })
-        {
-            @if (_me.IsBanned)
-            {
-                <span class="ban-badge">banned</span>
-            }
-            <span class="me">@_me.Name</span>
-            @if (_me.IsAdmin)
-            {
-                <a class="pill" href="admin">Admin</a>
-            }
-            <a class="pill" href="/logout">Log out</a>
-        }
-        else if (_me is not null)
-        {
-            <a class="pill" href="@LoginHref()">Log in</a>
-        }
-    </header>
-
-    <main class="content">
-        @if (_me is { Authenticated: true, IsBanned: false })
-        {
-            <div class="composer">
-                <input class="title-input" maxlength="100" @bind="_title" @bind:event="oninput" placeholder="Title (optional)" />
-                <textarea maxlength="280" @bind="_draft" @bind:event="oninput" placeholder="What's happening, mortal?"></textarea>
-                <div class="composer-bar">
-                    <span class="counter">@(280 - (_draft?.Length ?? 0))</span>
-                    <span class="status">@_status</span>
-                    <button class="pill primary" @onclick="Post" disabled="@(_posting || string.IsNullOrWhiteSpace(_draft))">
-                        @(_posting ? "Posting..." : "Post")
-                    </button>
-                </div>
+<main class="content">
+    @if (_me is { Authenticated: true, IsBanned: false })
+    {
+        <div class="composer">
+            <input class="title-input" maxlength="100" @bind="_title" @bind:event="oninput" placeholder="Title (optional)" />
+            <textarea maxlength="280" @bind="_draft" @bind:event="oninput" placeholder="What's happening, mortal?"></textarea>
+            <div class="composer-bar">
+                <span class="counter">@(280 - (_draft?.Length ?? 0))</span>
+                <span class="status">@_status</span>
+                <button class="pill primary" @onclick="Post" disabled="@(_posting || string.IsNullOrWhiteSpace(_draft))">
+                    @(_posting ? "Posting..." : "Post")
+                </button>
             </div>
-        }
-        else if (_me is { Authenticated: true, IsBanned: true })
-        {
-            <p class="login-hint">Your account is banned from posting. You can still read.</p>
-        }
-        else if (_me is not null)
-        {
-            <p class="login-hint">Read freely. <a href="@LoginHref()">Log in</a> to post.</p>
-        }
+        </div>
+    }
+    else if (_me is { Authenticated: true, IsBanned: true })
+    {
+        <p class="login-hint">Your account is banned from posting. You can still read.</p>
+    }
+    else if (_me is not null)
+    {
+        <p class="login-hint">Read freely. <a href="@LoginHref()">Log in</a> to post.</p>
+    }
 
-        @if (_loading)
+    @if (_loading)
+    {
+        <p class="hint center">Loading the timeline...</p>
+    }
+    else if (_posts.Count == 0)
+    {
+        <p class="hint center">Silence across the centuries. It won't last.</p>
+    }
+    else
+    {
+        @foreach (var post in _posts)
         {
-            <p class="hint center">Loading the timeline...</p>
-        }
-        else if (_posts.Count == 0)
-        {
-            <p class="hint center">Silence across the centuries. It won't last.</p>
-        }
-        else
-        {
-            @foreach (var post in _posts)
-            {
-                <article class="take">
-                    <div class="take-head">
-                        <span class="who">@post.Author</span>
-                        @if (post.IsAi)
+            <article class="take">
+                <div class="take-head">
+                    <span class="who">@post.Author</span>
+                    @if (post.IsAi)
+                    {
+                        <span class="ai-badge">@Badge(post.Provider, post.Model)</span>
+                    }
+                    <span class="hint">· @FeedFormatting.Ago(post.CreatedAt)</span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(post.Title))
+                {
+                    <div class="take-title">@post.Title</div>
+                }
+                <div class="take-body">@post.Content</div>
+                <div class="action-bar">
+                    <button class="act" disabled="@(!CanEngage)" @onclick="() => VotePost(post, 1)" title="Upvote">▲ @post.Upvotes</button>
+                    <button class="act down" disabled="@(!CanEngage)" @onclick="() => VotePost(post, -1)" title="Downvote">▼ @post.Downvotes</button>
+                    <span class="act score">@FeedFormatting.Score(post.Upvotes, post.Downvotes)</span>
+                    <button class="act" @onclick="() => Toggle(post.Id)">
+                        &#128172; @post.Replies.Count @(_open.Contains(post.Id) ? "▲" : "▼")
+                    </button>
+                    <button class="act" disabled="@(!CanEngage)" @onclick="() => Share(post)" title="Share">↗ @post.ShareCount</button>
+                    <a class="act link" href="@($"post/{post.Id}")">Open</a>
+                </div>
+                @if (_open.Contains(post.Id))
+                {
+                    <div class="replies">
+                        @foreach (var reply in post.Replies)
                         {
-                            <span class="ai-badge">@Badge(post.Provider, post.Model)</span>
+                            <div class="reply">
+                                <div class="take-head">
+                                    <span class="who">@reply.Author</span>
+                                    @if (reply.IsAi)
+                                    {
+                                        <span class="ai-badge">@Badge(reply.Provider, reply.Model)</span>
+                                    }
+                                    <span class="hint">· @FeedFormatting.Ago(reply.CreatedAt)</span>
+                                </div>
+                                <div class="take-body">@reply.Content</div>
+                                <div class="action-bar compact">
+                                    <button class="act" disabled="@(!CanEngage)" @onclick="() => VoteReply(post, reply, 1)">▲ @reply.Upvotes</button>
+                                    <button class="act down" disabled="@(!CanEngage)" @onclick="() => VoteReply(post, reply, -1)">▼ @reply.Downvotes</button>
+                                </div>
+                            </div>
                         }
-                        <span class="hint">· @FeedFormatting.Ago(post.CreatedAt)</span>
+                        @if (CanEngage)
+                        {
+                            <div class="reply-composer">
+                                <textarea maxlength="280" @bind="_replyDrafts[post.Id]" @bind:event="oninput" placeholder="Reply..."></textarea>
+                                <button class="pill primary" @onclick="() => Reply(post)" disabled="@string.IsNullOrWhiteSpace(GetReplyDraft(post.Id))">Reply</button>
+                            </div>
+                        }
                     </div>
-                    @if (!string.IsNullOrWhiteSpace(post.Title))
-                    {
-                        <div class="take-title">@post.Title</div>
-                    }
-                    <div class="take-body">@post.Content</div>
-                    <div class="action-bar">
-                        <button class="act" disabled="@(!CanEngage)" @onclick="() => VotePost(post, 1)" title="Upvote">▲ @post.Upvotes</button>
-                        <button class="act down" disabled="@(!CanEngage)" @onclick="() => VotePost(post, -1)" title="Downvote">▼ @post.Downvotes</button>
-                        <span class="act score">@FeedFormatting.Score(post.Upvotes, post.Downvotes)</span>
-                        <button class="act" @onclick="() => Toggle(post.Id)">
-                            &#128172; @post.Replies.Count @(_open.Contains(post.Id) ? "▲" : "▼")
-                        </button>
-                        <button class="act" disabled="@(!CanEngage)" @onclick="() => Share(post)" title="Share">↗ @post.ShareCount</button>
-                        <a class="act link" href="@($"post/{post.Id}")">Open</a>
-                    </div>
-                    @if (_open.Contains(post.Id))
-                    {
-                        <div class="replies">
-                            @foreach (var reply in post.Replies)
-                            {
-                                <div class="reply">
-                                    <div class="take-head">
-                                        <span class="who">@reply.Author</span>
-                                        @if (reply.IsAi)
-                                        {
-                                            <span class="ai-badge">@Badge(reply.Provider, reply.Model)</span>
-                                        }
-                                        <span class="hint">· @FeedFormatting.Ago(reply.CreatedAt)</span>
-                                    </div>
-                                    <div class="take-body">@reply.Content</div>
-                                    <div class="action-bar compact">
-                                        <button class="act" disabled="@(!CanEngage)" @onclick="() => VoteReply(post, reply, 1)">▲ @reply.Upvotes</button>
-                                        <button class="act down" disabled="@(!CanEngage)" @onclick="() => VoteReply(post, reply, -1)">▼ @reply.Downvotes</button>
-                                    </div>
-                                </div>
-                            }
-                            @if (CanEngage)
-                            {
-                                <div class="reply-composer">
-                                    <textarea maxlength="280" @bind="_replyDrafts[post.Id]" @bind:event="oninput" placeholder="Reply..."></textarea>
-                                    <button class="pill primary" @onclick="() => Reply(post)" disabled="@string.IsNullOrWhiteSpace(GetReplyDraft(post.Id))">Reply</button>
-                                </div>
-                            }
-                        </div>
-                    }
-                    @if (_shareMsg.TryGetValue(post.Id, out var sm))
-                    {
-                        <p class="share-msg">@sm</p>
-                    }
-                </article>
-            }
+                }
+                @if (_shareMsg.TryGetValue(post.Id, out var sm))
+                {
+                    <p class="share-msg">@sm</p>
+                }
+            </article>
         }
-    </main>
-</div>
+    }
+</main>
 
 @code {
     private MeDto? _me;
-    private AiStatusDto? _ai;
     private List<Post> _posts = new();
     private readonly HashSet<Guid> _open = new();
     private readonly Dictionary<Guid, string> _replyDrafts = new();
     private readonly Dictionary<Guid, string> _shareMsg = new();
     private bool _loading = true;
     private bool _posting;
-    private bool _realtimeOk;
     private string _draft = "";
     private string _title = "";
     private string _status = "";
@@ -165,34 +123,25 @@
     protected override async Task OnInitializedAsync()
     {
         try { _me = await Api.GetMeAsync(); } catch { }
-        try { _ai = await Api.GetAiStatusAsync(); } catch { }
         await Load();
 
         Realtime.FeedChanged += OnFeedChanged;
         await Realtime.StartAsync();
-        _realtimeOk = Realtime.IsConnected;
 
-        // Slow backup poll if SignalR is down; otherwise only refresh AI chip occasionally.
         _pollFallback = new System.Threading.Timer(async _ =>
         {
             await Realtime.EnsureConnectedAsync();
-            var was = _realtimeOk;
-            _realtimeOk = Realtime.IsConnected;
-            if (!_realtimeOk)
+            if (!Realtime.IsConnected)
+            {
                 await Load();
-            try { _ai = await Api.GetAiStatusAsync(); } catch { }
-            if (was != _realtimeOk)
                 await InvokeAsync(StateHasChanged);
-            else if (!_realtimeOk)
-                await InvokeAsync(StateHasChanged);
+            }
         }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
     }
 
     private async Task OnFeedChanged(FeedChangeMessage msg)
     {
-        _realtimeOk = true;
         await Load();
-        try { _ai = await Api.GetAiStatusAsync(); } catch { }
         await InvokeAsync(StateHasChanged);
     }
 
@@ -294,10 +243,10 @@
         return string.IsNullOrEmpty(model) ? provider : $"{provider}/{model}";
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
         Realtime.FeedChanged -= OnFeedChanged;
         _pollFallback?.Dispose();
-        await Realtime.DisposeAsync();
+        // Do not dispose scoped FeedRealtimeService; layout/navigation may still need it.
     }
 }

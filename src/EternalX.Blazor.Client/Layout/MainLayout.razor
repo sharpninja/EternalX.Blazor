@@ -1,0 +1,55 @@
+@inherits LayoutComponentBase
+@inject FeedApiClient Api
+@implements IDisposable
+
+<div class="app-frame">
+    <LeftSidebar />
+
+    <div class="center-column">
+        <header class="topbar">
+            <span class="topbar-title">Eternal<span class="brand-accent">X</span></span>
+            <span class="tagline topbar-tag">short takes from long-dead legends</span>
+            <span class="spacer"></span>
+            @if (_ai is not null)
+            {
+                <span class="ai-chip" title="@(_ai.Live ? "Live AI providers" : "Stub AI (set provider API keys)")">
+                    @if (_ai.Live)
+                    {
+                        <text>live: @string.Join(", ", _ai.LiveProviders ?? _ai.Providers ?? new List<string>())</text>
+                    }
+                    else
+                    {
+                        <text>stub</text>
+                    }
+                    @if (_ai.Paused) { <text> · paused</text> }
+                </span>
+            }
+        </header>
+
+        <div class="page-body">
+            @Body
+        </div>
+    </div>
+</div>
+
+@code {
+    private AiStatusDto? _ai;
+    private System.Threading.Timer? _poll;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAi();
+        _poll = new System.Threading.Timer(async _ =>
+        {
+            await RefreshAi();
+            await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    private async Task RefreshAi()
+    {
+        try { _ai = await Api.GetAiStatusAsync(); } catch { }
+    }
+
+    public void Dispose() => _poll?.Dispose();
+}

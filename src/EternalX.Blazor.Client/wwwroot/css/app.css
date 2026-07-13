@@ -7,6 +7,8 @@
     --up: #00ba7c;
     --down: #f91880;
     --warn: #ffd400;
+    --rail-width: 275px;
+    --center-width: 600px;
 }
 
 * { box-sizing: border-box; }
@@ -28,13 +30,170 @@ a:hover { text-decoration: underline; }
 
 .boot { padding: 60px 20px; text-align: center; color: var(--dim); font-size: 1.1rem; }
 
-.shell { max-width: 620px; margin: 0 auto; min-height: 100vh; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+/* ---- App frame: left rail + center column (X-style) ---- */
+.app-frame {
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    max-width: 1100px;
+    margin: 0 auto;
+    gap: 0;
+}
+
+.left-rail {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    width: var(--rail-width);
+    min-height: 100vh;
+    padding: 8px 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-right: 1px solid var(--line);
+}
+
+.rail-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 1.6rem;
+    margin: 4px 0 8px;
+}
+.rail-logo:hover {
+    background: rgba(231, 233, 234, 0.08);
+    text-decoration: none;
+}
+
+.rail-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.rail-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px 12px 12px;
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 1.2rem;
+    font-weight: 500;
+    line-height: 1.2;
+}
+.rail-item:hover {
+    background: rgba(231, 233, 234, 0.1);
+    text-decoration: none;
+}
+.rail-item.active {
+    font-weight: 800;
+}
+.rail-item.active .rail-label {
+    font-weight: 800;
+}
+.rail-admin .rail-label {
+    color: var(--warn);
+}
+.rail-admin.active .rail-label {
+    color: var(--warn);
+}
+
+.rail-icon {
+    width: 1.5rem;
+    text-align: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+.rail-label { white-space: nowrap; }
+
+.rail-footer {
+    margin-top: auto;
+    padding-top: 12px;
+}
+
+.rail-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 999px;
+}
+.rail-user:hover {
+    background: rgba(231, 233, 234, 0.08);
+}
+.rail-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: #333639;
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.rail-user-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.rail-user-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.rail-user-role {
+    font-size: 0.72rem;
+    color: var(--dim);
+    text-transform: lowercase;
+}
+
+.rail-cta {
+    display: block;
+    text-align: center;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    padding: 12px 16px;
+    border-radius: 999px;
+}
+.rail-cta:hover {
+    filter: brightness(1.08);
+    text-decoration: none;
+    color: #fff;
+}
+
+.center-column {
+    width: 100%;
+    max-width: var(--center-width);
+    min-height: 100vh;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+}
 
 .topbar {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     padding: 10px 16px; border-bottom: 1px solid var(--line);
     position: sticky; top: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px); z-index: 10;
 }
+.topbar-title {
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--ink);
+}
+.topbar-tag { display: inline; }
 .brand { font-weight: 800; font-size: 1.15rem; color: var(--ink); }
 .brand:hover { text-decoration: none; }
 .brand-x { font-size: 1.25rem; }
@@ -42,7 +201,6 @@ a:hover { text-decoration: underline; }
 .tagline { color: var(--dim); font-size: 0.75rem; }
 .spacer { flex: 1; }
 .me { font-size: 0.85rem; font-weight: 600; }
-.inline-form { display: inline; }
 
 .ai-chip {
     font-size: 0.7rem; color: var(--dim); border: 1px solid var(--line);
@@ -56,6 +214,7 @@ a:hover { text-decoration: underline; }
 .ban-badge {
     font-size: 0.7rem; font-weight: 700; color: #000; background: var(--down);
     border-radius: 4px; padding: 2px 6px; text-transform: uppercase;
+    width: fit-content;
 }
 .ai-badge {
     font-size: 0.68rem; color: var(--accent); border: 1px solid var(--accent);
@@ -72,6 +231,9 @@ a:hover { text-decoration: underline; }
 .pill.primary:disabled { opacity: 0.5; cursor: default; }
 .pill.danger { border-color: var(--down); color: var(--down); }
 
+.page-body { flex: 1; }
+.content { min-height: 0; }
+
 .composer { padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .composer textarea, .reply-composer textarea {
     width: 100%; min-height: 64px; background: none; border: none; resize: vertical;
@@ -86,6 +248,7 @@ a:hover { text-decoration: underline; }
 .status { flex: 1; color: var(--down); font-size: 0.82rem; }
 
 .login-hint { padding: 14px 16px; border-bottom: 1px solid var(--line); margin: 0; color: var(--dim); }
+.post-back { padding: 10px 16px; margin: 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 
 .take { padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .take-head { font-size: 0.85rem; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
@@ -116,9 +279,24 @@ a:hover { text-decoration: underline; }
 .share-msg { color: var(--up); font-size: 0.8rem; margin: 6px 0 0; }
 
 .admin { padding: 16px; }
-.admin-h { margin: 0 0 12px; font-size: 1.3rem; }
+.admin-h { margin: 0 0 8px; font-size: 1.3rem; }
 .stats { color: var(--dim); line-height: 1.7; }
 .admin-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+
+/* Narrow: icon-only rail */
+@media (max-width: 1000px) {
+    :root { --rail-width: 72px; }
+    .rail-label, .rail-user-meta, .rail-cta { display: none; }
+    .rail-item { justify-content: center; padding: 12px; }
+    .rail-user { justify-content: center; }
+    .topbar-tag { display: none; }
+}
+
+/* Phone: bottom-ish compact rail still on left as thin strip */
+@media (max-width: 560px) {
+    .app-frame { justify-content: flex-start; }
+    .center-column { border-right: none; }
+}
 
 #blazor-error-ui {
     background: #3a1d1d; color: var(--ink); bottom: 0; box-shadow: 0 -1px 2px rgba(0,0,0,0.4);

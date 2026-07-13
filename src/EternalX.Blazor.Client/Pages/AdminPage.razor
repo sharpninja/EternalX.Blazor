@@ -1,48 +1,40 @@
 @page "/admin"
 @inject FeedApiClient Api
-@inject NavigationManager Nav
 
-<PageTitle>Admin - EternalX</PageTitle>
+<PageTitle>Admin / EternalX</PageTitle>
 
-<div class="shell">
-    <header class="topbar">
-        <a class="brand" href="">← Eternal<span class="brand-accent">X</span></a>
-        <span class="tagline">owner tools</span>
-        <span class="spacer"></span>
-    </header>
-
-    <main class="content admin">
-        @if (_me is null)
+<main class="content admin">
+    @if (_me is null)
+    {
+        <p class="hint center">Checking access...</p>
+    }
+    else if (!_me.IsAdmin)
+    {
+        <p class="hint center">Forbidden. Owner only. Use the Admin link in the left sidebar when signed in as the configured owner.</p>
+    }
+    else
+    {
+        <h2 class="admin-h">Admin</h2>
+        <p class="hint">Owner tools for EternalX feed and roster.</p>
+        @if (_stats is not null)
         {
-            <p class="hint center">Checking access...</p>
+            <ul class="stats">
+                <li>Posts: @_stats.PostCount</li>
+                <li>Replies: @_stats.ReplyCount</li>
+                <li>Figures: @_stats.EnabledFigures / @_stats.FigureCount</li>
+                <li>Auto-reply: @(_stats.AutoReplyPaused ? "paused" : "running")</li>
+            </ul>
         }
-        else if (!_me.IsAdmin)
-        {
-            <p class="hint center">Forbidden. Owner only.</p>
-        }
-        else
-        {
-            <h2 class="admin-h">Admin</h2>
-            @if (_stats is not null)
-            {
-                <ul class="stats">
-                    <li>Posts: @_stats.PostCount</li>
-                    <li>Replies: @_stats.ReplyCount</li>
-                    <li>Figures: @_stats.EnabledFigures / @_stats.FigureCount</li>
-                    <li>Auto-reply: @(_stats.AutoReplyPaused ? "paused" : "running")</li>
-                </ul>
-            }
-            <div class="admin-actions">
-                <button class="pill" @onclick="Pause">Pause auto-reply</button>
-                <button class="pill" @onclick="Resume">Resume auto-reply</button>
-                <button class="pill" @onclick="Seed">Re-seed roster</button>
-                <button class="pill" @onclick="Export">Export JSON</button>
-                <button class="pill danger" @onclick="ClearFeed">Clear feed</button>
-            </div>
-            <p class="status">@_status</p>
-        }
-    </main>
-</div>
+        <div class="admin-actions">
+            <button class="pill" @onclick="Pause">Pause auto-reply</button>
+            <button class="pill" @onclick="Resume">Resume auto-reply</button>
+            <button class="pill" @onclick="Seed">Re-seed roster</button>
+            <button class="pill" @onclick="Export">Export JSON</button>
+            <button class="pill danger" @onclick="ClearFeed">Clear feed</button>
+        </div>
+        <p class="status">@_status</p>
+    }
+</main>
 
 @code {
     private MeDto? _me;
@@ -99,8 +91,6 @@
             return;
         }
         var bytes = await r.Content.ReadAsByteArrayAsync();
-        // Browser download without JS interop: open as data navigation is limited;
-        // show success with size for operator to use API/curl if needed.
         _status = $"Export ready ({bytes.Length} bytes). Use GET /api/admin/export to download.";
     }
 }
