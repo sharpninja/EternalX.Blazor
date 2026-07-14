@@ -1,0 +1,21 @@
+@using EternalX.Blazor.Shared
+
+<span class="avatar @CssClass" style="--av-h: @Hue" title="@Title" aria-hidden="true">
+    @Initials
+</span>
+
+@code {
+    /// <summary>Real display name.</summary>
+    [Parameter] public string? Author { get; set; }
+    /// <summary>Self-picked handle without @.</summary>
+    [Parameter] public string? Username { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+
+    private string Key =>
+        !string.IsNullOrWhiteSpace(Username) ? Username! :
+        Author ?? "unknown";
+
+    private int Hue => FeedFormatting.AvatarHue(Key);
+    private string Initials => FeedFormatting.Initials(Key);
+    private string Title => FeedFormatting.MetaAtHandle(Author, Username);
+}

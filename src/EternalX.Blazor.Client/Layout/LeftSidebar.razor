@@ -41,9 +41,10 @@
         @if (_me is { Authenticated: true })
         {
             <div class="rail-user" title="@_me.Email">
-                <span class="rail-avatar">@Initials(_me.Name)</span>
+                <Avatar Author="@(_me.Name ?? "me")" />
                 <span class="rail-user-meta">
-                    <span class="rail-user-name">@(_me.Name ?? "Member")</span>
+                    <span class="rail-user-name">@FeedFormatting.DisplayName(_me.Name ?? "Member")</span>
+                    <span class="rail-user-handle">@FeedFormatting.AtHandle(_me.Name ?? "member")</span>
                     @if (_me.IsBanned)
                     {
                         <span class="ban-badge">banned</span>
@@ -85,15 +86,6 @@
 
     private string LoginHref() =>
         $"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-
-    private static string Initials(string? name)
-    {
-        if (string.IsNullOrWhiteSpace(name)) return "?";
-        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 2)
-            return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
-        return char.ToUpperInvariant(name.Trim()[0]).ToString();
-    }
 
     public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
 }

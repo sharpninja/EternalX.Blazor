@@ -127,6 +127,7 @@ public class AutoReplyBackgroundService : BackgroundService
                 Id = Guid.NewGuid(),
                 Content = result.Text,
                 Author = figure.Name,
+                AuthorUsername = figure.ResolvedUsername,
                 IsAi = true,
                 FigureId = figure.Id,
                 Provider = result.Provider,
@@ -182,6 +183,7 @@ public class AutoReplyBackgroundService : BackgroundService
         {
             Content = result.Text,
             Author = figure.Name,
+            AuthorUsername = figure.ResolvedUsername,
             IsAi = true,
             FigureId = figure.Id,
             Provider = result.Provider,

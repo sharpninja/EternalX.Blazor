@@ -135,7 +135,8 @@ public class AiService
             FigureName: figure.Name,
             UserPrompt: userPrompt,
             Model: model,
-            Effort: effort);
+            Effort: effort,
+            Username: figure.ResolvedUsername);
 
         try
         {

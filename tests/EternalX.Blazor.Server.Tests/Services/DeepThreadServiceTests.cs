@@ -34,7 +34,7 @@ public class DeepThreadServiceTests : IDisposable
             Calls++;
             // Include figure name; do not echo huge prompts
             return Task.FromResult(new AiResult(
-                $"{request.FigureName} answers thoughtfully.",
+                $"{(string.IsNullOrWhiteSpace(request.Username) ? request.FigureName : "@" + request.Username)} answers thoughtfully.",
                 Name,
                 "mock-1"));
         }
@@ -62,6 +62,9 @@ public class DeepThreadServiceTests : IDisposable
             Assert.True(r.IsAi);
             Assert.False(string.IsNullOrEmpty(r.FigureId));
             Assert.Equal("mock", r.Provider);
+            Assert.False(string.IsNullOrWhiteSpace(r.Author));
+            Assert.False(string.IsNullOrWhiteSpace(r.AuthorUsername));
+            Assert.DoesNotContain("@", r.AuthorUsername);
             Assert.DoesNotContain("What is truth?", r.Content); // not full prompt echo of post alone ok if figure answers - content is short
         });
         Assert.InRange(provider.Calls, 5, 7);

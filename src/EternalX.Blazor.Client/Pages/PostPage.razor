@@ -1,71 +1,107 @@
 @page "/post/{Id:guid}"
 @inject FeedApiClient Api
+@inject NavigationManager Nav
 
 <PageTitle>Post / EternalX</PageTitle>
 
-<main class="content">
-    <p class="post-back"><a href="">← Back to Home</a></p>
+<main class="timeline">
+    <header class="timeline-header detail-header">
+        <a class="back-btn" href="" title="Back">←</a>
+        <h1 class="timeline-title">Post</h1>
+    </header>
+
     @if (_error is not null)
     {
         <p class="hint center">@_error</p>
     }
     else if (_post is null)
     {
-        <p class="hint center">Loading...</p>
+        <p class="hint center">Loading…</p>
     }
     else
     {
-        <article class="take">
+        <article class="tweet tweet-detail">
             @if (_post.QuotedPostId is not null)
             {
-                <div class="reshare-label">&#8635; @_post.Author quoted</div>
-            }
-            <div class="take-head">
-                <span class="who">@_post.Author</span>
-                @if (_post.IsAi)
-                {
-                    <span class="ai-badge">@_post.Provider</span>
-                }
-                <span class="hint">· @FeedFormatting.Ago(_post.CreatedAt)</span>
-            </div>
-            @if (!string.IsNullOrWhiteSpace(_post.Content))
-            {
-                <div class="take-body"><ContentText Text="@_post.Content" /></div>
-            }
-            @if (_post.QuotedPostId is not null)
-            {
-                <div class="quote-card">
-                    <div class="take-head">
-                        <span class="who">@(_post.QuotedAuthor ?? "…")</span>
-                    </div>
-                    <div class="take-body quote-body"><ContentText Text="@_post.QuotedContent" /></div>
+                <div class="tweet-context">
+                    <ActionIcon Kind="reshare" />
+                    <span>@FeedFormatting.MetaDisplayName(_post.Author, _post.AuthorUsername) quoted</span>
                 </div>
             }
-            <div class="action-bar">
-                <span class="act reply">&#128172; @_post.Replies.Count</span>
-                <span class="act reshare">&#8635; @_post.ReshareCount</span>
-                <span class="act like">♥ @_post.LikeCount</span>
+
+            <div class="tweet-row">
+                <Avatar Author="@_post.Author" Username="@_post.AuthorUsername" CssClass="avatar-lg" />
+                <div class="tweet-main">
+                    <TweetMeta Author="@_post.Author" Username="@_post.AuthorUsername"
+                               CreatedAt="@_post.CreatedAt"
+                               IsAi="@_post.IsAi" Provider="@_post.Provider" Model="@_post.Model" />
+                </div>
             </div>
-            <div class="replies">
-                @foreach (var reply in _post.Replies)
-                {
-                    <div class="reply" id="@reply.Id">
-                        <div class="take-head">
-                            <span class="who">@reply.Author</span>
-                            @if (reply.IsAi)
-                            {
-                                <span class="ai-badge">@reply.Provider</span>
-                            }
-                            <span class="hint">· @FeedFormatting.Ago(reply.CreatedAt)</span>
-                        </div>
-                        <div class="take-body"><ContentText Text="@reply.Content" /></div>
-                        <div class="action-bar compact">
-                            <span class="act like">♥ @reply.LikeCount</span>
+
+            @if (!string.IsNullOrWhiteSpace(_post.Content))
+            {
+                <div class="tweet-body tweet-body-lg"><ContentText Text="@_post.Content" /></div>
+            }
+
+            @if (_post.QuotedPostId is not null)
+            {
+                <a class="quote-card" href="@($"post/{_post.QuotedPostId}")">
+                    <div class="tweet-row quote-inner">
+                        <Avatar Author="@(_post.QuotedAuthor ?? "?")" Username="@_post.QuotedAuthorUsername" CssClass="avatar-sm" />
+                        <div class="tweet-main">
+                            <TweetMeta Author="@_post.QuotedAuthor" Username="@_post.QuotedAuthorUsername"
+                                       CreatedAt="@_post.CreatedAt" IsAi="@_post.QuotedIsAi" />
+                            <div class="tweet-body quote-body">
+                                <ContentText Text="@(_post.QuotedContent ?? "")" />
+                            </div>
                         </div>
                     </div>
-                }
+                </a>
+            }
+
+            <div class="detail-metrics">
+                <span><strong>@FeedFormatting.FormatCount(_post.Replies.Count)</strong> Replies</span>
+                <span><strong>@FeedFormatting.FormatCount(_post.ReshareCount)</strong> Reposts</span>
+                <span><strong>@FeedFormatting.FormatCount(_post.LikeCount)</strong> Likes</span>
+            </div>
+
+            <div class="action-bar action-bar-detail">
+                <span class="act act-reply"><span class="act-btn"><ActionIcon Kind="reply" /></span></span>
+                <span class="act act-reshare"><span class="act-btn"><ActionIcon Kind="reshare" /></span></span>
+                <span class="act act-like"><span class="act-btn"><ActionIcon Kind="like" /></span></span>
             </div>
         </article>
+
+        <section class="thread-section">
+            <h2 class="thread-heading">Replies</h2>
+            @if (_post.Replies.Count == 0)
+            {
+                <p class="hint center">No replies yet.</p>
+            }
+            else
+            {
+                @foreach (var reply in _post.Replies.OrderBy(r => r.CreatedAt))
+                {
+                    <article class="tweet" id="@reply.Id" @key="reply.Id">
+                        <div class="tweet-row">
+                            <Avatar Author="@reply.Author" Username="@reply.AuthorUsername" />
+                            <div class="tweet-main">
+                                <TweetMeta Author="@reply.Author" Username="@reply.AuthorUsername"
+                                           CreatedAt="@reply.CreatedAt"
+                                           IsAi="@reply.IsAi" Provider="@reply.Provider" Model="@reply.Model" />
+                                <div class="tweet-body"><ContentText Text="@reply.Content" /></div>
+                                <div class="action-bar compact">
+                                    <span class="act act-like">
+                                        <span class="act-btn"><ActionIcon Kind="like" /></span>
+                                        <span class="act-count">@FeedFormatting.CountLabel(reply.LikeCount)</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                }
+            }
+        </section>
     }
 </main>
 
@@ -77,6 +113,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        _error = null;
+        _post = null;
         try
         {
             _post = await Api.GetPostAsync(Id);

@@ -6,30 +6,46 @@
     <LeftSidebar />
 
     <div class="center-column">
-        <header class="topbar">
-            <span class="topbar-title">Eternal<span class="brand-accent">X</span></span>
-            <span class="tagline topbar-tag">short takes from long-dead legends</span>
-            <span class="spacer"></span>
-            @if (_ai is not null)
-            {
-                <span class="ai-chip" title="@(_ai.Live ? "Live AI providers" : "Stub AI (set provider API keys)")">
-                    @if (_ai.Live)
-                    {
-                        <text>live: @string.Join(", ", _ai.LiveProviders ?? _ai.Providers ?? new List<string>())</text>
-                    }
-                    else
-                    {
-                        <text>stub</text>
-                    }
-                    @if (_ai.Paused) { <text> · paused</text> }
-                </span>
-            }
-        </header>
-
         <div class="page-body">
             @Body
         </div>
     </div>
+
+    <aside class="right-rail" aria-label="Trends">
+        <div class="right-card">
+            <h2 class="right-title">Live on EternalX</h2>
+            @if (_ai is null)
+            {
+                <p class="hint">…</p>
+            }
+            else if (_ai.Live)
+            {
+                <p class="right-body">
+                    AI voices are live
+                    @if (_ai.LiveProviders is { Count: > 0 })
+                    {
+                        <text> via @string.Join(", ", _ai.LiveProviders)</text>
+                    }
+                    .
+                </p>
+            }
+            else
+            {
+                <p class="right-body">Stub mode — set provider API keys for live replies.</p>
+            }
+            @if (_ai?.Paused == true)
+            {
+                <p class="right-body warn">Auto-reply is paused.</p>
+            }
+        </div>
+        <div class="right-card">
+            <h2 class="right-title">About</h2>
+            <p class="right-body">
+                Short takes from historical figures. Hearts, reposts, @@mentions, #topics:
+                an X-style feed of long-dead legends.
+            </p>
+        </div>
+    </aside>
 </div>
 
 @code {

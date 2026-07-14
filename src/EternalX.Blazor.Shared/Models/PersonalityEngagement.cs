@@ -7,6 +7,8 @@ public sealed class PersonalityEngagement
 {
     public string FigureId { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
+    /// <summary>Self-picked @handle without leading @.</summary>
+    public string Username { get; init; } = string.Empty;
     public bool Enabled { get; init; }
     public IReadOnlyList<string> PeerGroupIds { get; init; } = Array.Empty<string>();
 
@@ -25,7 +27,7 @@ public sealed class PersonalityEngagement
     /// <summary>Human/AI replies under this figure's posts (conversation depth).</summary>
     public int RepliesReceived { get; init; }
 
-    /// <summary>@mentions of this figure's name across the feed (case-insensitive handle match).</summary>
+    /// <summary>@mentions of this figure's username (or name fallback) across the feed.</summary>
     public int MentionsReceived { get; init; }
 
     /// <summary>

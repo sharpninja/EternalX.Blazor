@@ -13,8 +13,11 @@ public sealed class StubAiProvider : IAiProvider
             ? request.UserPrompt
             : request.UserPrompt[..40] + "...";
 
+        var who = string.IsNullOrWhiteSpace(request.Username)
+            ? request.FigureName
+            : "@" + request.Username.TrimStart('@');
         var text =
-            $"{request.FigureName}: In character — {snippet} " +
+            $"{who}: In character — {snippet} " +
             $"(stub; persona notes: {Truncate(request.Persona, 60)})";
 
         return Task.FromResult(new AiResult(text, Name, "stub-1"));

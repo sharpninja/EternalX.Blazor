@@ -34,10 +34,15 @@ public class LiteDbServiceTests : IDisposable
         var figures = _db.GetFigures();
         var groups = _db.GetPeerGroups();
 
-        Assert.True(figures.Count >= 10);
-        Assert.True(groups.Count >= 4);
+        Assert.Equal(46, figures.Count);
+        Assert.Equal(8, groups.Count);
         Assert.Contains(figures, f => f.Id == "fig-socrates");
-        Assert.Contains(groups, g => g.Id == "pg-philosophers");
+        Assert.Contains(groups, g => g.Id == "philosophers");
+        Assert.Contains(groups, g => g.Id == "stage-screen");
+        var socrates = figures.Single(f => f.Id == "fig-socrates");
+        Assert.Equal("GadflyAthens", socrates.Username);
+        Assert.Equal("@GadflyAthens", socrates.AtHandle);
+        Assert.Contains(figures, f => f.Username == "StarmanZiggy");
     }
 
     [Fact]
@@ -45,12 +50,38 @@ public class LiteDbServiceTests : IDisposable
     {
         var edited = _db.GetFigure("fig-socrates")!;
         edited.Persona = "Operator-custom persona";
+        edited.Username = "MyCustomHandle";
         _db.UpsertFigure(edited);
 
         _db.EnsureSeeded();
 
         var again = _db.GetFigure("fig-socrates")!;
         Assert.Equal("Operator-custom persona", again.Persona);
+        Assert.Equal("MyCustomHandle", again.Username);
+    }
+
+    [Fact]
+    public void Seed_backfills_empty_username_without_clobbering_persona()
+    {
+        var edited = _db.GetFigure("fig-shakespeare")!;
+        edited.Username = "";
+        edited.Persona = "Keep this persona";
+        _db.UpsertFigure(edited);
+
+        _db.EnsureSeeded();
+
+        var again = _db.GetFigure("fig-shakespeare")!;
+        Assert.Equal("BardOfAvon", again.Username);
+        Assert.Equal("Keep this persona", again.Persona);
+    }
+
+    [Fact]
+    public void Seed_matches_shared_network_roster_size()
+    {
+        Assert.Equal(46, DefaultRoster.Figures().Count);
+        Assert.Equal(8, DefaultRoster.PeerGroups().Count);
+        // Names align with EternalReddit DefaultRoster (no Christopher Columbus).
+        Assert.DoesNotContain(DefaultRoster.Figures(), f => f.Name.Contains("Columbus", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

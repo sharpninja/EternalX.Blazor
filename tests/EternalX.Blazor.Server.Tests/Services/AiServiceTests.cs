@@ -43,13 +43,19 @@ public class AiServiceTests : IDisposable
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var ai = new AiService(config, _db, Array.Empty<IAiProvider>());
-        var figure = new Figure { Id = "f1", Name = "Socrates", Persona = "Ask questions." };
+        var figure = new Figure
+        {
+            Id = "f1",
+            Name = "Socrates",
+            Username = "GadflyAthens",
+            Persona = "Ask questions."
+        };
 
         var result = await ai.GenerateForFigureAsync(figure, "What is virtue?");
 
         Assert.Equal("stub", result.Provider);
         Assert.Equal("stub-1", result.Model);
-        Assert.Contains("Socrates", result.Text);
+        Assert.Contains("@GadflyAthens", result.Text);
         Assert.DoesNotContain(new string('x', 1000), result.Text);
     }
 

@@ -25,10 +25,19 @@ public abstract class EnvHttpAiProvider : IAiProvider
     public abstract bool IsConfigured { get; }
     public abstract Task<AiResult> GenerateAsync(AiRequest request, CancellationToken cancellationToken = default);
 
-    protected static string BuildSystem(AiRequest request) =>
-        $"You are {request.FigureName}. Stay strictly in character. Persona: {request.Persona}. " +
-        "Keep replies short (1-3 sentences). Be playful and affectionate. Do not break character. " +
-        "Do not claim to be an AI model.";
+    protected static string BuildSystem(AiRequest request)
+    {
+        var handle = string.IsNullOrWhiteSpace(request.Username)
+            ? request.FigureName
+            : "@" + request.Username.TrimStart('@');
+        return
+            $"You are {handle} on a social timeline (X-style). " +
+            $"Your @username is how others address and mention you; use that identity, not a formal historical name. " +
+            $"Historical figure behind the handle: {request.FigureName}. " +
+            $"Stay strictly in character. Persona: {request.Persona}. " +
+            "Keep replies short (1-3 sentences). Be playful and affectionate. Do not break character. " +
+            "Do not claim to be an AI model. Do not sign posts with your historical name; the username is enough.";
+    }
 
     protected string? FirstConfig(params string[] keys)
     {

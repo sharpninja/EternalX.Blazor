@@ -5,7 +5,10 @@ public class Post
     public Guid Id { get; set; } = Guid.NewGuid();
     public string? Title { get; set; }
     public string Content { get; set; } = string.Empty;
+    /// <summary>Real display name (historical name for AI figures, gateway name for humans).</summary>
     public string Author { get; set; } = string.Empty;
+    /// <summary>Self-picked @handle without leading @ (AI figures; optional for humans).</summary>
+    public string? AuthorUsername { get; set; }
     public string? AuthorUserId { get; set; }
     public bool IsAi { get; set; }
     public string? FigureId { get; set; }
@@ -40,6 +43,7 @@ public class Post
     /// <summary>When this post is a quote-reshare of another post.</summary>
     public Guid? QuotedPostId { get; set; }
     public string? QuotedAuthor { get; set; }
+    public string? QuotedAuthorUsername { get; set; }
     public string? QuotedContent { get; set; }
     public bool QuotedIsAi { get; set; }
 
@@ -54,7 +58,10 @@ public class Reply
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Content { get; set; } = string.Empty;
+    /// <summary>Real display name.</summary>
     public string Author { get; set; } = string.Empty;
+    /// <summary>Self-picked @handle without leading @.</summary>
+    public string? AuthorUsername { get; set; }
     public string? AuthorUserId { get; set; }
     public bool IsAi { get; set; }
     public string? FigureId { get; set; }

@@ -77,8 +77,19 @@ public class LiteDbService
         var figures = db.GetCollection<Figure>("figures");
         foreach (var f in DefaultRoster.Figures())
         {
-            if (figures.FindById(f.Id) is null)
+            var existing = figures.FindById(f.Id);
+            if (existing is null)
+            {
                 figures.Insert(f);
+                continue;
+            }
+
+            // Backfill self-picked @username without clobbering operator edits or persona.
+            if (string.IsNullOrWhiteSpace(existing.Username) && !string.IsNullOrWhiteSpace(f.Username))
+            {
+                existing.Username = f.Username;
+                figures.Update(existing);
+            }
         }
 
         var settings = db.GetCollection<FeedSettings>("settings");
@@ -87,14 +98,88 @@ public class LiteDbService
     }
 
     public IEnumerable<Post> GetRecentPosts(int count = 50) => WithDb(db =>
-        db.GetCollection<Post>("posts")
+    {
+        var figures = db.GetCollection<Figure>("figures").FindAll().ToDictionary(f => f.Id, StringComparer.OrdinalIgnoreCase);
+        return db.GetCollection<Post>("posts")
             .FindAll()
             .OrderByDescending(p => p.CreatedAt)
             .Take(count)
-            .ToList());
+            .Select(p => HydrateAuthors(p, figures))
+            .ToList();
+    });
+
+    /// <summary>
+    /// Posts that reference a hashtag in body, stored tags, quote, or replies.
+    /// Scans a wider window than the home timeline so tag pages stay useful.
+    /// </summary>
+    public IReadOnlyList<Post> GetPostsByHashtag(string tag, int count = 50) => WithDb(db =>
+    {
+        var figures = db.GetCollection<Figure>("figures").FindAll().ToDictionary(f => f.Id, StringComparer.OrdinalIgnoreCase);
+        var all = db.GetCollection<Post>("posts").FindAll().ToList();
+        var matched = ContentTags.FilterByHashtag(all, tag, take: count <= 0 ? 50 : count);
+        return matched.Select(p => HydrateAuthors(p, figures)).ToList();
+    });
 
     public Post? GetPost(Guid id) => WithDb(db =>
-        db.GetCollection<Post>("posts").FindById(id));
+    {
+        var post = db.GetCollection<Post>("posts").FindById(id);
+        if (post is null) return null;
+        var figures = db.GetCollection<Figure>("figures").FindAll().ToDictionary(f => f.Id, StringComparer.OrdinalIgnoreCase);
+        return HydrateAuthors(post, figures);
+    });
+
+    /// <summary>
+    /// Ensures AI posts/replies expose real name + username for the X meta line,
+    /// including legacy rows that only stored @@handle in Author.
+    /// </summary>
+    internal static Post HydrateAuthors(Post post, IReadOnlyDictionary<string, Figure> figures)
+    {
+        HydrateOne(post, figures);
+        if (post.Replies is { Count: > 0 })
+        {
+            foreach (var reply in post.Replies)
+                HydrateOne(reply, figures);
+        }
+
+        if (post.QuotedIsAi &&
+            string.IsNullOrWhiteSpace(post.QuotedAuthorUsername) &&
+            !string.IsNullOrWhiteSpace(post.QuotedAuthor) &&
+            post.QuotedAuthor.TrimStart().StartsWith('@'))
+        {
+            post.QuotedAuthorUsername = FigureHandles.Normalize(post.QuotedAuthor);
+        }
+
+        return post;
+    }
+
+    private static void HydrateOne(Post post, IReadOnlyDictionary<string, Figure> figures)
+    {
+        if (!post.IsAi || string.IsNullOrWhiteSpace(post.FigureId))
+            return;
+        if (!figures.TryGetValue(post.FigureId, out var fig))
+            return;
+
+        if (string.IsNullOrWhiteSpace(post.AuthorUsername))
+            post.AuthorUsername = fig.ResolvedUsername;
+
+        // Legacy: Author was only the @handle. Prefer roster real name.
+        if (string.IsNullOrWhiteSpace(post.Author) || post.Author.TrimStart().StartsWith('@'))
+            post.Author = fig.Name;
+    }
+
+    private static void HydrateOne(Reply reply, IReadOnlyDictionary<string, Figure> figures)
+    {
+        if (!reply.IsAi || string.IsNullOrWhiteSpace(reply.FigureId))
+            return;
+        if (!figures.TryGetValue(reply.FigureId, out var fig))
+            return;
+
+        if (string.IsNullOrWhiteSpace(reply.AuthorUsername))
+            reply.AuthorUsername = fig.ResolvedUsername;
+
+        if (string.IsNullOrWhiteSpace(reply.Author) || reply.Author.TrimStart().StartsWith('@'))
+            reply.Author = fig.Name;
+    }
 
     public void SavePost(Post post) => WithDb(db =>
     {
@@ -305,6 +390,7 @@ public class LiteDbService
 
                 quotePost.QuotedPostId = source.Id;
                 quotePost.QuotedAuthor = source.Author;
+                quotePost.QuotedAuthorUsername = source.AuthorUsername;
                 quotePost.QuotedContent = source.Content;
                 quotePost.QuotedIsAi = source.IsAi;
                 quotePost.Mentions = ContentTags.ExtractMentions(quotePost.Content);

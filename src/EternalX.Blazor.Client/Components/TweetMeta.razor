@@ -1,0 +1,29 @@
+@using EternalX.Blazor.Shared
+
+<div class="tweet-meta">
+    <span class="tweet-name">@FeedFormatting.MetaDisplayName(Author, Username)</span>
+    <span class="tweet-handle">@FeedFormatting.MetaAtHandle(Author, Username)</span>
+    <span class="tweet-dot" aria-hidden="true">·</span>
+    <time class="tweet-time" datetime="@CreatedAt.ToString("o")" title="@CreatedAt.ToUniversalTime().ToString("u")">
+        @FeedFormatting.Ago(CreatedAt)
+    </time>
+    @if (IsAi)
+    {
+        <span class="tweet-verified" title="@(string.IsNullOrEmpty(Provider) ? "Historical figure (AI)" : $"{Provider}{(string.IsNullOrEmpty(Model) ? "" : "/" + Model)}")">
+            <svg viewBox="0 0 22 22" width="16" height="16" aria-label="AI figure">
+                <path fill="currentColor" d="M11 2.5 13.4 8l5.9.5-4.5 3.9 1.4 5.7L11 15.4 5.8 18.1l1.4-5.7L2.7 8.5 8.6 8 11 2.5z"/>
+            </svg>
+        </span>
+    }
+</div>
+
+@code {
+    /// <summary>Real display name (e.g. Socrates).</summary>
+    [Parameter] public string? Author { get; set; }
+    /// <summary>Self-picked handle without @ (e.g. GadflyAthens).</summary>
+    [Parameter] public string? Username { get; set; }
+    [Parameter] public DateTime CreatedAt { get; set; }
+    [Parameter] public bool IsAi { get; set; }
+    [Parameter] public string? Provider { get; set; }
+    [Parameter] public string? Model { get; set; }
+}

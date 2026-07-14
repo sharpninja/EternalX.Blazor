@@ -3,7 +3,10 @@
 
 <PageTitle>Admin / EternalX</PageTitle>
 
-<main class="content admin">
+<main class="timeline admin">
+    <header class="timeline-header">
+        <h1 class="timeline-title">Admin</h1>
+    </header>
     @if (_me is null)
     {
         <p class="hint center">Checking access...</p>
@@ -14,7 +17,7 @@
     }
     else
     {
-        <h2 class="admin-h">Admin</h2>
+        <div class="admin">
         <p class="hint">Owner tools for EternalX feed, AI agents, and roster.</p>
 
         @if (_stats is not null)
@@ -71,7 +74,8 @@
                                 <tr class="@(row.Enabled ? "" : "eng-disabled")">
                                     <td>@rank</td>
                                     <td class="eng-name">
-                                        @row.Name
+                                        <span class="who">@@@(string.IsNullOrWhiteSpace(row.Username) ? row.Name : row.Username)</span>
+                                        <span class="hint"> · @row.Name</span>
                                         @if (!row.Enabled)
                                         {
                                             <span class="agent-pill off">benched</span>
@@ -175,6 +179,7 @@
         </section>
 
         <p class="status">@_status</p>
+        </div>
     }
 </main>
 

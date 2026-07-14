@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using EternalX.Blazor.Shared.Models;
 
 namespace EternalX.Blazor.Shared;
 
@@ -40,6 +41,69 @@ public static class ContentTags
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
+
+    /// <summary>Strip leading # and invalid chars; empty if not a usable tag.</summary>
+    public static string NormalizeHashtag(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
+
+        var s = raw.Trim();
+        if (s.StartsWith('#'))
+            s = s[1..];
+
+        s = new string(s.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+        if (s.Length > 50)
+            s = s[..50];
+        return s;
+    }
+
+    /// <summary>True if post body, stored tags, quote body, or any reply references the tag.</summary>
+    public static bool PostMatchesHashtag(Post post, string tag)
+    {
+        var normalized = NormalizeHashtag(tag);
+        if (string.IsNullOrEmpty(normalized) || post is null)
+            return false;
+
+        if (ListHasTag(post.Hashtags, normalized))
+            return true;
+        if (ContentHasTag(post.Content, normalized))
+            return true;
+        if (ContentHasTag(post.QuotedContent, normalized))
+            return true;
+
+        foreach (var reply in post.Replies ?? Enumerable.Empty<Reply>())
+        {
+            if (ListHasTag(reply.Hashtags, normalized))
+                return true;
+            if (ContentHasTag(reply.Content, normalized))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Filter and order posts for a hashtag timeline (newest first).</summary>
+    public static IReadOnlyList<Post> FilterByHashtag(IEnumerable<Post> posts, string tag, int take = 50)
+    {
+        var normalized = NormalizeHashtag(tag);
+        if (string.IsNullOrEmpty(normalized))
+            return Array.Empty<Post>();
+
+        take = take <= 0 ? 50 : take;
+        return posts
+            .Where(p => PostMatchesHashtag(p, normalized))
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(take)
+            .ToList();
+    }
+
+    private static bool ListHasTag(IEnumerable<string>? tags, string normalized) =>
+        tags is not null &&
+        tags.Any(t => string.Equals(NormalizeHashtag(t), normalized, StringComparison.OrdinalIgnoreCase));
+
+    private static bool ContentHasTag(string? content, string normalized) =>
+        ExtractHashtags(content).Any(t => string.Equals(t, normalized, StringComparison.OrdinalIgnoreCase));
 
     public enum SegmentKind { Text, Mention, Hashtag }
 

@@ -25,6 +25,22 @@ public static class PostEndpoints
             return post is null ? Results.NotFound() : Results.Ok(post);
         });
 
+        /// <summary>X-style hashtag timeline: posts/replies containing #tag.</summary>
+        app.MapGet("/api/hashtags/{tag}", (LiteDbService db, string tag, int? count) =>
+        {
+            var normalized = ContentTags.NormalizeHashtag(tag);
+            if (string.IsNullOrEmpty(normalized))
+                return Results.BadRequest(new { error = "Invalid hashtag." });
+
+            var posts = db.GetPostsByHashtag(normalized, count is > 0 ? count.Value : 50);
+            return Results.Ok(new
+            {
+                tag = normalized,
+                count = posts.Count,
+                posts
+            });
+        });
+
         app.MapGet("/api/me", (HttpContext http, LiteDbService db, IConfiguration config) =>
         {
             var authed = http.User.Identity?.IsAuthenticated ?? false;

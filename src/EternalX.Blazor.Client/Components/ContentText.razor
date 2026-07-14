@@ -9,7 +9,15 @@
     }
     else if (seg.Kind == ContentTags.SegmentKind.Hashtag)
     {
-        <span class="hashtag">@seg.Text</span>
+        var tag = ContentTags.NormalizeHashtag(seg.Text);
+        @if (!string.IsNullOrEmpty(tag))
+        {
+            <a class="hashtag" href="@($"hashtag/{Uri.EscapeDataString(tag)}")" @onclick:stopPropagation="true">@seg.Text</a>
+        }
+        else
+        {
+            <span class="hashtag">@seg.Text</span>
+        }
     }
     else
     {

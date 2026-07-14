@@ -19,6 +19,12 @@ public sealed class FeedApiClient
     public Task<Post?> GetPostAsync(Guid id)
         => _http.GetFromJsonAsync<Post>($"api/posts/{id}");
 
+    public async Task<HashtagFeedDto?> GetHashtagFeedAsync(string tag)
+    {
+        var encoded = Uri.EscapeDataString(tag.TrimStart('#'));
+        return await _http.GetFromJsonAsync<HashtagFeedDto>($"api/hashtags/{encoded}");
+    }
+
     public Task<HttpResponseMessage> CreatePostAsync(string content, string? title = null)
         => _http.PostAsJsonAsync("api/posts", new { Content = content, Title = title });
 
@@ -76,6 +82,11 @@ public sealed class FeedApiClient
     }
 }
 
+public sealed record HashtagFeedDto(
+    string Tag,
+    int Count,
+    List<Post>? Posts);
+
 public sealed record MeDto(
     bool Authenticated,
     string? UserId,
@@ -121,6 +132,7 @@ public sealed record PersonalityEngagementReportDto(
 public sealed record PersonalityEngagementDto(
     string FigureId,
     string Name,
+    string? Username,
     bool Enabled,
     List<string>? PeerGroupIds,
     int PostsAuthored,

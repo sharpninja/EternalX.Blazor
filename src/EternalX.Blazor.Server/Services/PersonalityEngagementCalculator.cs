@@ -70,10 +70,10 @@ public static class PersonalityEngagementCalculator
             if (quoted > reshares)
                 reshares = quoted;
 
-            var handle = ToHandle(fig.Name);
+            var handle = FigureHandles.ResolveUsername(fig.Username, fig.Name);
             mentionHits.TryGetValue(handle, out var mentions);
-            // Also match raw display name without spaces as handle variants
-            if (mentionHits.TryGetValue(fig.Name.Replace(" ", "", StringComparison.Ordinal), out var m2))
+            // Also match historical name squeezed as handle (legacy mentions)
+            if (mentionHits.TryGetValue(ToHandle(fig.Name), out var m2))
                 mentions = Math.Max(mentions, m2);
             if (mentionHits.TryGetValue(fig.Name, out var m3))
                 mentions = Math.Max(mentions, m3);
@@ -84,6 +84,7 @@ public static class PersonalityEngagementCalculator
             {
                 FigureId = fig.Id,
                 Name = fig.Name,
+                Username = handle,
                 Enabled = fig.Enabled,
                 PeerGroupIds = fig.PeerGroupIds?.ToList() ?? new List<string>(),
                 PostsAuthored = postsAuthored,

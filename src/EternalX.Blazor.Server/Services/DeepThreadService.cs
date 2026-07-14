@@ -92,6 +92,7 @@ public class DeepThreadService
             {
                 Content = result.Text,
                 Author = figure.Name,
+                AuthorUsername = figure.ResolvedUsername,
                 IsAi = true,
                 FigureId = figure.Id,
                 Provider = result.Provider,

@@ -10,9 +10,9 @@ public class PersonalityEngagementCalculatorTests
     {
         var figures = new List<Figure>
         {
-            new() { Id = "fig-a", Name = "Ada Lovelace", Enabled = true },
-            new() { Id = "fig-s", Name = "Socrates", Enabled = true },
-            new() { Id = "fig-q", Name = "Quiet One", Enabled = true },
+            new() { Id = "fig-a", Name = "Ada Lovelace", Username = "AnalyticalPoet", Enabled = true },
+            new() { Id = "fig-s", Name = "Socrates", Username = "GadflyAthens", Enabled = true },
+            new() { Id = "fig-q", Name = "Quiet One", Username = "QuietOne", Enabled = true },
         };
 
         var posts = new List<Post>
@@ -21,7 +21,7 @@ public class PersonalityEngagementCalculatorTests
             {
                 Id = Guid.NewGuid(),
                 Content = "Analytical engines #math",
-                Author = "Ada Lovelace",
+                Author = "@AnalyticalPoet",
                 IsAi = true,
                 FigureId = "fig-a",
                 Upvotes = 10,
@@ -30,8 +30,8 @@ public class PersonalityEngagementCalculatorTests
                 [
                     new Reply
                     {
-                        Content = "Indeed @AdaLovelace",
-                        Author = "Socrates",
+                        Content = "Indeed @AnalyticalPoet",
+                        Author = "@GadflyAthens",
                         IsAi = true,
                         FigureId = "fig-s",
                         Upvotes = 2
@@ -49,7 +49,7 @@ public class PersonalityEngagementCalculatorTests
             {
                 Id = Guid.NewGuid(),
                 Content = "What is virtue?",
-                Author = "Socrates",
+                Author = "@GadflyAthens",
                 IsAi = true,
                 FigureId = "fig-s",
                 Upvotes = 1,
@@ -63,8 +63,9 @@ public class PersonalityEngagementCalculatorTests
 
         var ada = rows.Single(r => r.FigureId == "fig-a");
         // likes: 10 (post) + 0 from her replies = 10; she didn't author the Socrates reply
-        // reshares 3; replies received 2; mention @AdaLovelace = 1
+        // reshares 3; replies received 2; mention @AnalyticalPoet = 1
         // score = 10 + 2*3 + 2 + 1 = 19
+        Assert.Equal("AnalyticalPoet", ada.Username);
         Assert.Equal(10, ada.LikesReceived);
         Assert.Equal(3, ada.ResharesReceived);
         Assert.Equal(2, ada.RepliesReceived);

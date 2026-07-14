@@ -1,14 +1,19 @@
-@page "/"
+@page "/hashtag/{Tag}"
 @inject FeedApiClient Api
-@inject FeedRealtimeService Realtime
 @inject NavigationManager Nav
-@implements IDisposable
 
-<PageTitle>Home / EternalX</PageTitle>
+<PageTitle>#@DisplayTag / EternalX</PageTitle>
 
 <main class="timeline">
-    <header class="timeline-header">
-        <h1 class="timeline-title">Home</h1>
+    <header class="timeline-header detail-header">
+        <a class="back-btn" href="" title="Back to Home">←</a>
+        <div class="hashtag-header-text">
+            <h1 class="timeline-title">#@DisplayTag</h1>
+            @if (!_loading)
+            {
+                <span class="hint hashtag-count">@_posts.Count post@(_posts.Count == 1 ? "" : "s")</span>
+            }
+        </div>
     </header>
 
     @if (_me is { Authenticated: true, IsBanned: false })
@@ -18,9 +23,9 @@
                 <Avatar Author="@(_me.Name ?? "me")" CssClass="avatar-lg" />
                 <div class="tweet-main">
                     <textarea maxlength="280" @bind="_draft" @bind:event="oninput"
-                              placeholder="What's happening?" rows="3"></textarea>
+                              placeholder="@($"Post with #{DisplayTag}")" rows="3"></textarea>
                     <div class="composer-bar">
-                        <span class="composer-hint">@@mentions · #topics</span>
+                        <span class="composer-hint">Tagged with #@DisplayTag</span>
                         <span class="counter @(_draft.Length > 260 ? "counter-warn" : "")">@(280 - _draft.Length)</span>
                         <button type="button" class="btn-post" @onclick="Post"
                                 disabled="@(_posting || string.IsNullOrWhiteSpace(_draft))">
@@ -35,22 +40,18 @@
             </div>
         </div>
     }
-    else if (_me is { Authenticated: true, IsBanned: true })
-    {
-        <p class="login-hint">Your account is banned from posting. You can still read the timeline.</p>
-    }
-    else if (_me is not null)
-    {
-        <p class="login-hint">Read freely. <a href="@LoginHref()">Log in</a> to post, reply, like, and repost.</p>
-    }
 
-    @if (_loading)
+    @if (_error is not null)
     {
-        <p class="hint center">Loading timeline…</p>
+        <p class="hint center">@_error</p>
+    }
+    else if (_loading)
+    {
+        <p class="hint center">Loading #@DisplayTag…</p>
     }
     else if (_posts.Count == 0)
     {
-        <p class="hint center empty-feed">Silence across the centuries. It won't last.</p>
+        <p class="hint center empty-feed">No posts with #@DisplayTag yet. Be the first.</p>
     }
     else
     {
@@ -90,8 +91,7 @@
                                     <Avatar Author="@(post.QuotedAuthor ?? "?")" Username="@post.QuotedAuthorUsername" CssClass="avatar-sm" />
                                     <div class="tweet-main">
                                         <TweetMeta Author="@post.QuotedAuthor" Username="@post.QuotedAuthorUsername"
-                                                   CreatedAt="@post.CreatedAt"
-                                                   IsAi="@post.QuotedIsAi" />
+                                                   CreatedAt="@post.CreatedAt" IsAi="@post.QuotedIsAi" />
                                         <div class="tweet-body quote-body">
                                             <ContentText Text="@(post.QuotedContent ?? "")" />
                                         </div>
@@ -100,9 +100,8 @@
                             </a>
                         }
 
-                        <div class="action-bar" @onclick:stopPropagation="true">
-                            <button type="button" class="act act-reply" title="Reply"
-                                    @onclick="() => Toggle(post.Id)">
+                        <div class="action-bar">
+                            <button type="button" class="act act-reply" title="Reply" @onclick="() => Toggle(post.Id)">
                                 <span class="act-btn"><ActionIcon Kind="reply" /></span>
                                 <span class="act-count">@FeedFormatting.CountLabel(post.Replies.Count)</span>
                             </button>
@@ -172,11 +171,6 @@
                                 }
                             </div>
                         }
-
-                        @if (_statusMsg.TryGetValue(post.Id, out var sm))
-                        {
-                            <p class="share-msg">@sm</p>
-                        }
                     </div>
                 </div>
             </article>
@@ -185,50 +179,52 @@
 </main>
 
 @code {
+    [Parameter] public string Tag { get; set; } = "";
+
     private MeDto? _me;
     private List<Post> _posts = new();
     private readonly HashSet<Guid> _open = new();
     private readonly Dictionary<Guid, string> _replyDrafts = new();
-    private readonly Dictionary<Guid, string> _statusMsg = new();
     private bool _loading = true;
     private bool _posting;
     private string _draft = "";
     private string _status = "";
+    private string? _error;
     private Guid? _reshareFor;
     private string _reshareComment = "";
-    private System.Threading.Timer? _pollFallback;
 
+    private string DisplayTag => ContentTags.NormalizeHashtag(Tag);
     private bool CanEngage => _me is { Authenticated: true, IsBanned: false };
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        try { _me = await Api.GetMeAsync(); } catch { }
-        await Load();
+        _loading = true;
+        _error = null;
+        _posts = new();
 
-        Realtime.FeedChanged += OnFeedChanged;
-        await Realtime.StartAsync();
-
-        _pollFallback = new System.Threading.Timer(async _ =>
+        if (string.IsNullOrEmpty(DisplayTag))
         {
-            await Realtime.EnsureConnectedAsync();
-            if (!Realtime.IsConnected)
-            {
-                await Load();
-                await InvokeAsync(StateHasChanged);
-            }
-        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
-    }
+            _error = "Invalid hashtag.";
+            _loading = false;
+            return;
+        }
 
-    private async Task OnFeedChanged(FeedChangeMessage msg)
-    {
-        await Load();
-        await InvokeAsync(StateHasChanged);
-    }
+        // Prefill composer so new posts land on this tag feed.
+        if (string.IsNullOrWhiteSpace(_draft))
+            _draft = $"#{DisplayTag} ";
 
-    private async Task Load()
-    {
-        try { _posts = await Api.GetPostsAsync(); }
-        catch { _status = "Couldn't load the timeline."; }
+        try { _me = await Api.GetMeAsync(); } catch { }
+
+        try
+        {
+            var feed = await Api.GetHashtagFeedAsync(DisplayTag);
+            _posts = feed?.Posts ?? new List<Post>();
+        }
+        catch
+        {
+            _error = "Couldn't load this hashtag.";
+        }
+
         _loading = false;
     }
 
@@ -238,12 +234,16 @@
         _status = "";
         try
         {
-            var res = await Api.CreatePostAsync(_draft);
+            var text = _draft.Trim();
+            // Ensure the active tag is present so the post stays on this feed.
+            if (!ContentTags.PostMatchesHashtag(new Post { Content = text }, DisplayTag))
+                text = $"{text} #{DisplayTag}".Trim();
+
+            var res = await Api.CreatePostAsync(text);
             if (res.IsSuccessStatusCode)
             {
-                _draft = "";
-                await Load();
-                if (_posts.Count > 0) _open.Add(_posts[0].Id);
+                _draft = $"#{DisplayTag} ";
+                await Reload();
             }
             else
             {
@@ -260,6 +260,16 @@
         _posting = false;
     }
 
+    private async Task Reload()
+    {
+        try
+        {
+            var feed = await Api.GetHashtagFeedAsync(DisplayTag);
+            _posts = feed?.Posts ?? new List<Post>();
+        }
+        catch { /* keep existing */ }
+    }
+
     private async Task Reply(Post post)
     {
         var text = GetReplyDraft(post.Id);
@@ -268,30 +278,27 @@
         if (res.IsSuccessStatusCode)
         {
             _replyDrafts[post.Id] = "";
-            await Load();
+            await Reload();
             _open.Add(post.Id);
         }
-        else
-            _status = "Reply failed.";
     }
 
     private async Task LikePost(Post post)
     {
         var res = await Api.LikePostAsync(post.Id);
-        if (res.IsSuccessStatusCode) await Load();
+        if (res.IsSuccessStatusCode) await Reload();
     }
 
     private async Task LikeReply(Post post, Reply reply)
     {
         var res = await Api.LikeReplyAsync(post.Id, reply.Id);
-        if (res.IsSuccessStatusCode) await Load();
+        if (res.IsSuccessStatusCode) await Reload();
     }
 
     private void BeginReshare(Post post)
     {
         _reshareFor = post.Id;
         _reshareComment = "";
-        _statusMsg.Remove(post.Id);
     }
 
     private async Task ConfirmReshare(Post post)
@@ -302,11 +309,8 @@
         {
             _reshareFor = null;
             _reshareComment = "";
-            _statusMsg[post.Id] = "Reposted to your timeline.";
-            await Load();
+            await Reload();
         }
-        else
-            _statusMsg[post.Id] = "Repost failed (log in?).";
         _posting = false;
     }
 
@@ -322,13 +326,4 @@
 
     private string GetReplyDraft(Guid id) =>
         _replyDrafts.TryGetValue(id, out var v) ? v : "";
-
-    private string LoginHref() =>
-        $"/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-
-    public void Dispose()
-    {
-        Realtime.FeedChanged -= OnFeedChanged;
-        _pollFallback?.Dispose();
-    }
 }
